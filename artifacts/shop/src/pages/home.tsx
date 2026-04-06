@@ -136,59 +136,78 @@ export default function Home() {
       {/* ───── HERO ───── */}
       <section ref={heroRef} className="relative h-[100vh] min-h-[640px] flex items-center overflow-hidden">
 
-        {/* ── Background image with Ken Burns zoom ── */}
-        <motion.div
-          className="absolute inset-0 z-0"
-          style={{ y: heroY }}
-        >
+        {/* ── Background image with slow drift ── */}
+        <motion.div className="absolute inset-0 z-0" style={{ y: heroY }}>
           <motion.img
             src={heroBg}
             alt="Luxury boutique"
             className="w-full h-full object-cover origin-center"
-            animate={{ scale: [1.08, 1.2] }}
-            transition={{ duration: 20, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
+            animate={{ scale: [1.06, 1.13], x: [0, -12, 0] }}
+            transition={{ duration: 22, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
           />
-
-          {/* Multi-layer dramatic gradients */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-black/10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent" />
-
-          {/* Light sweep shimmer */}
-          <motion.div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.04) 50%, transparent 70%)",
-            }}
-            animate={{ x: ["-100%", "200%"] }}
-            transition={{ duration: 5, repeat: Infinity, repeatDelay: 8, ease: "easeInOut" }}
-          />
-
-          {/* Subtle film grain overlay */}
-          <div
-            className="absolute inset-0 opacity-[0.035] mix-blend-overlay pointer-events-none"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-              backgroundSize: "128px 128px",
-            }}
-          />
+          {/* Base dark layer */}
+          <div className="absolute inset-0 bg-black/55" />
+          {/* Bottom fade to background */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
         </motion.div>
 
-        {/* ── Animated orb glows ── */}
-        {[
-          { w: 500, h: 500, l: "5%", t: "20%", color: "bg-accent/15", dur: 8 },
-          { w: 350, h: 350, l: "60%", t: "10%", color: "bg-primary/20", dur: 11 },
-          { w: 280, h: 280, l: "30%", t: "60%", color: "bg-white/8", dur: 9 },
-          { w: 200, h: 200, l: "80%", t: "55%", color: "bg-accent/10", dur: 7 },
-        ].map((orb, i) => (
+        {/* ── Light-bulb diffuse glow effect ── */}
+        {/* Core bulb pulse — warm white center */}
+        <motion.div
+          className="absolute pointer-events-none z-[1]"
+          style={{ top: "28%", left: "58%", transform: "translate(-50%,-50%)" }}
+          animate={{ opacity: [0.55, 0.95, 0.55], scale: [1, 1.18, 1] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <div className="w-56 h-56 rounded-full bg-white/30 blur-2xl" />
+        </motion.div>
+
+        {/* Mid glow ring — warm amber */}
+        <motion.div
+          className="absolute pointer-events-none z-[1]"
+          style={{ top: "28%", left: "58%", transform: "translate(-50%,-50%)" }}
+          animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.3, 1] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+        >
+          <div className="w-96 h-96 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, rgba(251,191,36,0.5) 0%, rgba(251,146,60,0.25) 50%, transparent 75%)" }} />
+        </motion.div>
+
+        {/* Outer diffuse halo */}
+        <motion.div
+          className="absolute pointer-events-none z-[1]"
+          style={{ top: "28%", left: "58%", transform: "translate(-50%,-50%)" }}
+          animate={{ opacity: [0.18, 0.38, 0.18], scale: [0.9, 1.15, 0.9] }}
+          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+        >
+          <div className="w-[600px] h-[600px] rounded-full blur-[80px]" style={{ background: "radial-gradient(circle, rgba(251,191,36,0.25) 0%, rgba(253,186,116,0.12) 45%, transparent 70%)" }} />
+        </motion.div>
+
+        {/* Volumetric light rays fanning out from bulb */}
+        {[0, 40, 80, 120, 160, 200, 240, 300].map((deg, i) => (
           <motion.div
-            key={i}
-            className={`absolute rounded-full ${orb.color} blur-3xl pointer-events-none`}
-            style={{ width: orb.w, height: orb.h, left: orb.l, top: orb.t }}
-            animate={{ y: [0, -30, 0], x: [0, 15, 0], opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: orb.dur, repeat: Infinity, ease: "easeInOut", delay: i * 1.2 }}
+            key={deg}
+            className="absolute pointer-events-none z-[1] origin-center"
+            style={{
+              top: "28%", left: "58%",
+              width: 2, height: 220,
+              transform: `translate(-50%, -10%) rotate(${deg}deg)`,
+              transformOrigin: "top center",
+              background: "linear-gradient(to bottom, rgba(255,220,120,0.18), transparent)",
+            }}
+            animate={{ opacity: [0.15, 0.45, 0.15], scaleY: [0.8, 1.1, 0.8] }}
+            transition={{ duration: 3.5 + i * 0.3, repeat: Infinity, ease: "easeInOut", delay: i * 0.15 }}
           />
         ))}
+
+        {/* Slow ambient left glow */}
+        <motion.div
+          className="absolute pointer-events-none z-[1]"
+          style={{ bottom: "10%", left: "5%" }}
+          animate={{ opacity: [0.2, 0.45, 0.2] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <div className="w-80 h-80 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, rgba(110,180,100,0.2) 0%, transparent 70%)" }} />
+        </motion.div>
 
         {/* ── Hero content ── */}
         <motion.div style={{ opacity: heroOpacity }} className="container mx-auto px-4 z-10 relative">
@@ -212,26 +231,25 @@ export default function Home() {
             </motion.span>
 
             {/* ── Swapping headline ── */}
-            <motion.div variants={itemVariants} className="mb-8">
-              {/* Fixed height container so swap doesn't shift layout */}
-              <div className="relative" style={{ minHeight: "clamp(120px, 18vw, 200px)" }}>
+            <motion.div variants={itemVariants} className="mb-6">
+              <div className="relative" style={{ minHeight: "clamp(72px, 10vw, 120px)" }}>
                 <AnimatePresence mode="wait">
                   <motion.h1
                     key={`${headlineIdx}-${showSecond ? "b" : "a"}`}
-                    initial={{ y: 60, opacity: 0, filter: "blur(12px)" }}
+                    initial={{ y: 28, opacity: 0, filter: "blur(6px)" }}
                     animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-                    exit={{ y: -50, opacity: 0, filter: "blur(8px)" }}
-                    transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-                    className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-serif font-bold leading-[1.0] absolute inset-x-0 top-0"
+                    exit={{ y: -22, opacity: 0, filter: "blur(4px)" }}
+                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                    className="text-3xl sm:text-4xl md:text-[2.75rem] font-serif font-semibold leading-[1.15] tracking-[-0.01em] absolute inset-x-0 top-0"
                   >
                     {showSecond ? (
                       <span className="relative inline-block">
                         {currentHeadline.line2}
                         <motion.span
-                          className="absolute -bottom-1 left-0 h-[4px] bg-accent rounded-full"
+                          className="absolute -bottom-0.5 left-0 h-[2px] bg-accent rounded-full"
                           initial={{ scaleX: 0 }}
                           animate={{ scaleX: 1 }}
-                          transition={{ delay: 0.3, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                          transition={{ delay: 0.25, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                           style={{ originX: 0 }}
                         />
                       </span>
