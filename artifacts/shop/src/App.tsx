@@ -9,6 +9,10 @@ import Home from "@/pages/home";
 import Products from "@/pages/products";
 import ProductDetail from "@/pages/product-detail";
 import Cart from "@/pages/cart";
+import OurStory from "@/pages/our-story";
+import Journal from "@/pages/journal";
+import Stores from "@/pages/stores";
+import Contact from "@/pages/contact";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +23,10 @@ function Router() {
       <Route path="/products" component={Products} />
       <Route path="/products/:id" component={ProductDetail} />
       <Route path="/cart" component={Cart} />
+      <Route path="/our-story" component={OurStory} />
+      <Route path="/journal" component={Journal} />
+      <Route path="/stores" component={Stores} />
+      <Route path="/contact" component={Contact} />
       <Route component={NotFound} />
     </Switch>
   );
