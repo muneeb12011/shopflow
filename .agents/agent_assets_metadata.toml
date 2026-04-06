@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "1ngAy_1OgC2bSIlpMSc14"
+uri = "file://artifacts/shop/src/assets/hero-bg.png"
+type = "image"
+title = "Luxury boutique hero background"
+
+[[generated]]
+id = "4NBCi-t7rrzkm8ckvIADt"
+uri = "file://artifacts/shop/src/assets/category-furniture.png"
+type = "image"
+title = "Furniture category image"
+
+[[generated]]
+id = "Xrej5PV5QOo6bP0_FWtFJ"
+uri = "file://artifacts/shop/src/assets/category-lighting.png"
+type = "image"
+title = "Lighting category image"
+
+[[generated]]
+id = "LFxZGKd24A1fXBby-zZVQ"
+uri = "file://artifacts/shop/src/assets/category-decor.png"
+type = "image"
+title = "Decor category image"
