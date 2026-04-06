@@ -81,11 +81,40 @@ const trustFeatures = [
   { icon: Zap, title: "Fast Support", desc: "24/7 dedicated assistance" },
 ];
 
+const heroHeadlines = [
+  { line1: "Curated living,", line2: "for the bold." },
+  { line1: "Designed for you,", line2: "built to last." },
+  { line1: "Less noise,", line2: "more beauty." },
+];
+
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 140]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 160]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.65], [1, 0]);
+  const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
+
+  const [headlineIdx, setHeadlineIdx] = useState(0);
+  const [showSecond, setShowSecond] = useState(false);
+  const [started, setStarted] = useState(false);
+
+  // Sequence: line1 in → pause → line2 replaces line1 → pause → next pair
+  useEffect(() => {
+    const delay1 = setTimeout(() => setStarted(true), 600);
+    return () => clearTimeout(delay1);
+  }, []);
+
+  useEffect(() => {
+    if (!started) return;
+    // Show line1, after 1.8s swap to line2, after another 2.2s advance headline
+    setShowSecond(false);
+    const t1 = setTimeout(() => setShowSecond(true), 1800);
+    const t2 = setTimeout(() => {
+      setHeadlineIdx(i => (i + 1) % heroHeadlines.length);
+      setShowSecond(false);
+    }, 4400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [started, headlineIdx]);
 
   const { data: featuredProducts, isLoading: featuredLoading } = useGetFeaturedProducts();
   const { data: stats } = useGetProductStats();
@@ -100,88 +129,150 @@ export default function Home() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } },
   };
 
+  const currentHeadline = heroHeadlines[headlineIdx];
+
   return (
     <Layout>
       {/* ───── HERO ───── */}
-      <section ref={heroRef} className="relative h-[92vh] min-h-[600px] flex items-center overflow-hidden">
-        <motion.div className="absolute inset-0 z-0" style={{ y: heroY }}>
-          <img src={heroBg} alt="Luxury boutique" className="w-full h-full object-cover scale-110" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+      <section ref={heroRef} className="relative h-[100vh] min-h-[640px] flex items-center overflow-hidden">
+
+        {/* ── Background image with Ken Burns zoom ── */}
+        <motion.div
+          className="absolute inset-0 z-0"
+          style={{ y: heroY }}
+        >
+          <motion.img
+            src={heroBg}
+            alt="Luxury boutique"
+            className="w-full h-full object-cover origin-center"
+            animate={{ scale: [1.08, 1.2] }}
+            transition={{ duration: 20, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
+          />
+
+          {/* Multi-layer dramatic gradients */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent" />
+
+          {/* Light sweep shimmer */}
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.04) 50%, transparent 70%)",
+            }}
+            animate={{ x: ["-100%", "200%"] }}
+            transition={{ duration: 5, repeat: Infinity, repeatDelay: 8, ease: "easeInOut" }}
+          />
+
+          {/* Subtle film grain overlay */}
+          <div
+            className="absolute inset-0 opacity-[0.035] mix-blend-overlay pointer-events-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+              backgroundSize: "128px 128px",
+            }}
+          />
         </motion.div>
 
-        {/* Floating orb particles */}
-        {[...Array(5)].map((_, i) => (
+        {/* ── Animated orb glows ── */}
+        {[
+          { w: 500, h: 500, l: "5%", t: "20%", color: "bg-accent/15", dur: 8 },
+          { w: 350, h: 350, l: "60%", t: "10%", color: "bg-primary/20", dur: 11 },
+          { w: 280, h: 280, l: "30%", t: "60%", color: "bg-white/8", dur: 9 },
+          { w: 200, h: 200, l: "80%", t: "55%", color: "bg-accent/10", dur: 7 },
+        ].map((orb, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full bg-accent/20 blur-3xl pointer-events-none"
-            style={{
-              width: `${120 + i * 60}px`,
-              height: `${120 + i * 60}px`,
-              left: `${10 + i * 20}%`,
-              top: `${15 + i * 15}%`,
-            }}
-            animate={{
-              y: [0, -20, 0],
-              x: [0, 10, 0],
-              opacity: [0.3, 0.6, 0.3],
-            }}
-            transition={{ duration: 5 + i * 1.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.8 }}
+            className={`absolute rounded-full ${orb.color} blur-3xl pointer-events-none`}
+            style={{ width: orb.w, height: orb.h, left: orb.l, top: orb.t }}
+            animate={{ y: [0, -30, 0], x: [0, 15, 0], opacity: [0.6, 1, 0.6] }}
+            transition={{ duration: orb.dur, repeat: Infinity, ease: "easeInOut", delay: i * 1.2 }}
           />
         ))}
 
+        {/* ── Hero content ── */}
         <motion.div style={{ opacity: heroOpacity }} className="container mx-auto px-4 z-10 relative">
           <motion.div
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="max-w-2xl text-white"
+            className="max-w-3xl text-white"
           >
+            {/* Badge */}
             <motion.span
               variants={itemVariants}
-              className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-white/15 backdrop-blur-md text-xs font-bold tracking-widest uppercase mb-6 border border-white/20"
+              className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-white/12 backdrop-blur-md text-xs font-bold tracking-widest uppercase mb-8 border border-white/20"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              <motion.span
+                className="w-1.5 h-1.5 rounded-full bg-accent"
+                animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
               The Winter Collection
             </motion.span>
 
-            <motion.h1
-              variants={itemVariants}
-              className="text-5xl md:text-7xl font-serif font-bold mb-6 leading-[1.05]"
-            >
-              Curated living,{" "}
-              <span className="relative inline-block">
-                designed
-                <motion.span
-                  className="absolute bottom-0 left-0 h-[3px] bg-accent rounded-full"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ delay: 0.9, duration: 0.6, ease: "easeOut" }}
-                  style={{ originX: 0 }}
-                />
-              </span>{" "}
-              for you.
-            </motion.h1>
+            {/* ── Swapping headline ── */}
+            <motion.div variants={itemVariants} className="mb-8">
+              {/* Fixed height container so swap doesn't shift layout */}
+              <div className="relative" style={{ minHeight: "clamp(120px, 18vw, 200px)" }}>
+                <AnimatePresence mode="wait">
+                  <motion.h1
+                    key={`${headlineIdx}-${showSecond ? "b" : "a"}`}
+                    initial={{ y: 60, opacity: 0, filter: "blur(12px)" }}
+                    animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
+                    exit={{ y: -50, opacity: 0, filter: "blur(8px)" }}
+                    transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+                    className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-serif font-bold leading-[1.0] absolute inset-x-0 top-0"
+                  >
+                    {showSecond ? (
+                      <span className="relative inline-block">
+                        {currentHeadline.line2}
+                        <motion.span
+                          className="absolute -bottom-1 left-0 h-[4px] bg-accent rounded-full"
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: 1 }}
+                          transition={{ delay: 0.3, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                          style={{ originX: 0 }}
+                        />
+                      </span>
+                    ) : (
+                      currentHeadline.line1
+                    )}
+                  </motion.h1>
+                </AnimatePresence>
+              </div>
+            </motion.div>
 
-            <motion.p variants={itemVariants} className="text-lg md:text-xl text-white/80 mb-10 max-w-lg leading-relaxed">
+            {/* Headline progress dots */}
+            <motion.div variants={itemVariants} className="flex items-center gap-2 mb-8">
+              {heroHeadlines.map((_, i) => (
+                <motion.button
+                  key={i}
+                  onClick={() => { setHeadlineIdx(i); setShowSecond(false); }}
+                  className={`h-1 rounded-full transition-all duration-500 ${i === headlineIdx ? "w-8 bg-white" : "w-2 bg-white/30"}`}
+                />
+              ))}
+            </motion.div>
+
+            <motion.p variants={itemVariants} className="text-lg md:text-xl text-white/75 mb-10 max-w-lg leading-relaxed">
               Discover our premium collection of minimal, tactile, and confident pieces that elevate your everyday spaces.
             </motion.p>
 
             <motion.div variants={itemVariants} className="flex flex-wrap gap-4">
               <Link href="/products">
                 <motion.span
-                  whileHover={{ scale: 1.03 }}
+                  whileHover={{ scale: 1.04, boxShadow: "0 0 40px rgba(255,255,255,0.25)" }}
                   whileTap={{ scale: 0.97 }}
-                  className="inline-flex items-center gap-2 bg-white text-primary px-8 py-4 rounded-full font-semibold hover:bg-white/95 transition-colors shadow-xl cursor-pointer"
+                  className="inline-flex items-center gap-2 bg-white text-primary px-8 py-4 rounded-full font-bold hover:bg-white/95 transition-all shadow-2xl cursor-pointer"
                 >
                   Shop Collection <ArrowRight className="w-4 h-4" />
                 </motion.span>
               </Link>
               <Link href="/products?sort=newest">
                 <motion.span
-                  whileHover={{ scale: 1.03 }}
+                  whileHover={{ scale: 1.04, backgroundColor: "rgba(0,0,0,0.55)" }}
                   whileTap={{ scale: 0.97 }}
-                  className="inline-flex items-center gap-2 bg-black/30 backdrop-blur-md text-white border border-white/25 px-8 py-4 rounded-full font-semibold hover:bg-black/50 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-2 bg-black/30 backdrop-blur-md text-white border border-white/25 px-8 py-4 rounded-full font-bold transition-all cursor-pointer"
                 >
                   New Arrivals
                 </motion.span>
@@ -190,18 +281,38 @@ export default function Home() {
           </motion.div>
         </motion.div>
 
-        {/* Scroll hint */}
+        {/* ── Corner accent lines ── */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 1.5, duration: 1 }}
+          className="absolute bottom-12 right-12 z-10 hidden lg:flex flex-col items-end gap-2 text-white/40"
+        >
+          <div className="flex items-center gap-3 text-xs uppercase tracking-widest font-medium">
+            <motion.div
+              className="h-px bg-white/40"
+              initial={{ width: 0 }}
+              animate={{ width: 48 }}
+              transition={{ delay: 2, duration: 0.8 }}
+            />
+            Scroll to explore
+          </div>
+        </motion.div>
+
+        {/* ── Animated scroll indicator ── */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-white/60"
+          transition={{ delay: 2.5 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2"
         >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-            className="w-px h-12 bg-gradient-to-b from-transparent to-white/40 rounded-full"
-          />
+          <div className="w-6 h-10 rounded-full border border-white/30 flex items-start justify-center pt-2">
+            <motion.div
+              className="w-1.5 h-1.5 rounded-full bg-white"
+              animate={{ y: [0, 16, 0], opacity: [1, 0, 1] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </div>
         </motion.div>
       </section>
 
