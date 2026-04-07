@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "types": ["node"],
+    "outDir": "../.vercel/output/functions/api",
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts"],
+  "references": [
+    { "path": "../artifacts/api-server" },
+    { "path": "../lib/db" },
+    { "path": "../lib/api-zod" }
+  ]
+}
