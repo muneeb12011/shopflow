@@ -1,4 +1,4 @@
-# ShopFlow — Animated E-Commerce Store
+# ShopFlow — E-Commerce Store
 
 > React 19 · Express 5 · PostgreSQL · Vercel
 
