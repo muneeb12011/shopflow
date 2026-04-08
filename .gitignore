@@ -1,55 +1,77 @@
-# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# -----------------------------
+# Dependencies
+# -----------------------------
+node_modules/
+.pnpm-store/
 
-# The format of this file is identical to `.dockerignore`.
-# It is used to reduce the size of deployed images to make the process of publishing faster.
+# -----------------------------
+# Build outputs
+# -----------------------------
+dist/
+build/
+out/
+.next/
+.vercel/
 
-# No need to store the pnpm store twice.
-.local
+# Your specific folders
+artifacts/shop/dist/
+artifacts/api-server/dist/
 
-# compiled output
-dist
-tmp
-out-tsc
+# -----------------------------
+# Logs
+# -----------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# -----------------------------
+# Environment variables
+# -----------------------------
+.env
+.env.local
+.env.*.local
+
+# -----------------------------
+# TypeScript
+# -----------------------------
 *.tsbuildinfo
-.expo
-.expo-shared
 
-# dependencies
-node_modules
+# -----------------------------
+# Cache
+# -----------------------------
+.cache/
+.tmp/
+.temp/
 
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-# IDE - VSCode
+# -----------------------------
+# IDEs & Editors
+# -----------------------------
 .vscode/*
 !.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/launch.json
 
-# misc
-/.sass-cache
-/connect.lock
-/coverage
-/libpeerconnection.log
-npm-debug.log
-yarn-error.log
-testem.log
-/typings
+.idea/
+*.sublime-workspace
 
-# System Files
+# -----------------------------
+# OS files
+# -----------------------------
 .DS_Store
 Thumbs.db
 
-.cursor/rules/nx-rules.mdc
-.github/instructions/nx.instructions.md
+# -----------------------------
+# Testing / coverage
+# -----------------------------
+coverage/
 
-# Replit
-.cache/
+# -----------------------------
+# Misc
+# -----------------------------
 .local/
+.expo/
+.expo-shared/
+.sass-cache/
