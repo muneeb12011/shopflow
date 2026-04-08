@@ -12,6 +12,7 @@
     "push-force": "drizzle-kit push --force --config ./drizzle.config.ts"
   },
   "dependencies": {
+    "dotenv": "^17.4.1",
     "drizzle-orm": "catalog:",
     "drizzle-zod": "^0.8.3",
     "pg": "^8.20.0",

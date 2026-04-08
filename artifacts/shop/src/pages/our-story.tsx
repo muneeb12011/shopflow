@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout";
 import { motion } from "framer-motion";
 
 const timeline = [
-  { year: "2018", title: "The Idea", desc: "Founded in a small Copenhagen apartment by two designers who believed everyday objects deserved to be extraordinary." },
+  { year: "2018", title: "The Idea", desc: "Founded in a small Islamabad apartment by two designers who believed everyday objects deserved to be extraordinary." },
   { year: "2019", title: "First Collection", desc: "Our debut furniture line sold out in 48 hours. We knew we were onto something real." },
   { year: "2020", title: "Going Digital", desc: "Launched ShopFlow to bring our curated world to homes everywhere, shipping to 40+ countries." },
   { year: "2022", title: "Lighting Studio", desc: "Opened our dedicated lighting design studio in Malmö — bringing sculptural light to the forefront." },

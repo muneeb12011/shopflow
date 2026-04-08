@@ -2,10 +2,10 @@
   "version": 2,
   "installCommand": "pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm run typecheck:libs && pnpm --filter @workspace/api-server run build:serverless && pnpm --filter @workspace/shop run build",
-  "outputDirectory": "artifacts/shop/dist/public",
+  "outputDirectory": "artifacts/shop/dist",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {

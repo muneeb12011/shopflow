@@ -1,7 +1,11 @@
+import * as dotenv from "dotenv";
+import { resolve } from "path";
+dotenv.config({ path: resolve(process.cwd(), "../../.env") });
+
 import app from "./app";
 import { logger } from "./lib/logger";
 
-const rawPort = process.env["PORT"];
+const rawPort = process.env["API_PORT"] ?? process.env["PORT"];
 const port = rawPort ? Number(rawPort) : 8080;
 
 if (Number.isNaN(port) || port <= 0) {

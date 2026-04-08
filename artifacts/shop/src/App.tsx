@@ -13,6 +13,7 @@ import OurStory from "@/pages/our-story";
 import Journal from "@/pages/journal";
 import Stores from "@/pages/stores";
 import Contact from "@/pages/contact";
+import ArticlePage from "@/pages/articlepage";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/our-story" component={OurStory} />
       <Route path="/journal" component={Journal} />
+      <Route path="/journal/:slug" component={ArticlePage} />
       <Route path="/stores" component={Stores} />
       <Route path="/contact" component={Contact} />
       <Route component={NotFound} />

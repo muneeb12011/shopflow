@@ -21,14 +21,14 @@ const contactInfo = [
   {
     icon: Phone,
     label: "Call us",
-    value: "+45 33 12 45 67",
-    link: "tel:+4533124567",
-    desc: "Mon–Fri, 9am–6pm CET",
+    value: "+92 311 3313836",
+    link: "tel:+923113313836",
+    desc: "Mon–Fri, 9am–6pm PMT",
   },
   {
     icon: MapPin,
     label: "Visit us",
-    value: "Bredgade 24, Copenhagen",
+    value: "Islamabad, Pakistan",
     link: "#stores",
     desc: "Our flagship store",
   },
