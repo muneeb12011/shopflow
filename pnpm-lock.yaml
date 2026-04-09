@@ -144,10 +144,19 @@ importers:
 
   .:
     dependencies:
+      dotenv:
+        specifier: ^17.4.1
+        version: 17.4.1
       pg:
         specifier: ^8.20.0
         version: 8.20.0
+      serverless-http:
+        specifier: ^4.0.0
+        version: 4.0.0
     devDependencies:
+      drizzle-kit:
+        specifier: ^0.31.9
+        version: 0.31.9
       prettier:
         specifier: ^3.8.1
         version: 3.8.1
@@ -397,10 +406,6 @@ importers:
         version: 3.25.76
 
   artifacts/shop:
-    dependencies:
-      dotenv:
-        specifier: ^17.4.1
-        version: 17.4.1
     devDependencies:
       '@hookform/resolvers':
         specifier: ^3.10.0
@@ -2942,6 +2947,10 @@ packages:
   serve-static@2.2.1:
     resolution: {integrity: sha512-xRXBn0pPqQTVQiC8wyQrKs2MOlX24zQ0POGaj0kultvoOCstBQM5yvOhAVSUwOMjQtTvsPWoNCHfPGwaaQJhTw==}
     engines: {node: '>= 18'}
+
+  serverless-http@4.0.0:
+    resolution: {integrity: sha512-KKl9h1+VApX9y2vHsVMogf906UXBwO3FDYiWPzqS0mCjEEx4Sx91JrssbWA7RN43HBuxrtoh8MkocZPvjyGnLg==}
+    engines: {node: '>=12.0'}
 
   setprototypeof@1.2.0:
     resolution: {integrity: sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==}
@@ -5587,6 +5596,8 @@ snapshots:
       send: 1.2.1
     transitivePeerDependencies:
       - supports-color
+
+  serverless-http@4.0.0: {}
 
   setprototypeof@1.2.0: {}
 

@@ -1,0 +1,17 @@
+# all node_modules
+node_modules
+**/node_modules
+node_modules/.pnpm
+
+# unused artifacts
+artifacts/api-server
+artifacts/mockup-sandbox
+agents
+
+# misc
+.git
+*.log
+.env
+.env.*
+.DS_Store
+Thumbs.db

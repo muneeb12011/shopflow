@@ -75,3 +75,5 @@ coverage/
 .expo/
 .expo-shared/
 .sass-cache/
+.vercel
+.env*.local

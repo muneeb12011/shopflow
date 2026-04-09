@@ -2,18 +2,24 @@
   "name": "workspace",
   "version": "0.0.0",
   "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
-    "preinstall": "node -e \"const fs=require('fs');['package-lock.json','yarn.lock'].forEach(f=>{try{fs.unlinkSync(f)}catch(e){}});const ua=process.env.npm_config_user_agent||'';if(!ua.startsWith('pnpm')){console.error('Use pnpm instead of npm/yarn');process.exit(1)}\"",
+    "preinstall": "node -e \"const fs=require('fs');['package-lock.json','yarn.lock'].forEach(f=>{try{fs.unlinkSync(f)}catch(e){}});\"",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
-  "private": true,
   "devDependencies": {
+    "drizzle-kit": "^0.31.9",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2"
   },
   "dependencies": {
-    "pg": "^8.20.0"
+    "dotenv": "^17.4.1",
+    "pg": "^8.20.0",
+    "serverless-http": "^4.0.0"
   }
 }

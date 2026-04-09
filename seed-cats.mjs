@@ -1,4 +1,5 @@
 ﻿import pg from 'pg';
+import 'dotenv/config';
 const { Pool } = pg;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -24,5 +25,6 @@ async function seed() {
   } finally {
     await pool.end();
   }
+  console.log("DB URL:", process.env.DATABASE_URL); // debug
 }
 seed();
