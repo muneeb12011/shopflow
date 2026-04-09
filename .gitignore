@@ -15,7 +15,6 @@ out/
 
 # Your specific folders
 artifacts/shop/dist/
-artifacts/api-server/dist/
 
 # -----------------------------
 # Logs
