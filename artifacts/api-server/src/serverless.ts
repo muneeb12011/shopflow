@@ -1,8 +1,8 @@
 import serverless from "serverless-http";
-import app from "./app.mjs";
+import app from "./app";
 
 const handler = serverless(app, {
-  request: (req) => {
+  request: (req: any) => {
     req.url = req.url.replace(/^\/api/, "") || "/";
   },
 });
