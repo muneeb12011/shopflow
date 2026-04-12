@@ -12,7 +12,7 @@ async function buildServerless() {
   const outfile = path.resolve(artifactDir, "dist/app.mjs");
 
   await esbuild({
-    entryPoints: [path.resolve(artifactDir, "src/app.ts")],
+    entryPoints: [path.resolve(artifactDir, "src/serverless.ts")],
     platform: "node",
     bundle: true,
     format: "esm",

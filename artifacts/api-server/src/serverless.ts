@@ -1,3 +1,7 @@
+import * as dotenv from "dotenv";
+import { resolve } from "path";
+dotenv.config({ path: resolve(process.cwd(), "../../.env") });
+
 import serverless from "serverless-http";
 import app from "./app";
 

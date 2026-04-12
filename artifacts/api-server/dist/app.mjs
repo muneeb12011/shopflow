@@ -40,6 +40,1144 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
+// ../../node_modules/.pnpm/dotenv@17.4.1/node_modules/dotenv/lib/main.js
+var require_main = __commonJS({
+  "../../node_modules/.pnpm/dotenv@17.4.1/node_modules/dotenv/lib/main.js"(exports, module) {
+    var fs = __require("fs");
+    var path = __require("path");
+    var os = __require("os");
+    var crypto2 = __require("crypto");
+    var TIPS = [
+      "\u25C8 encrypted .env [www.dotenvx.com]",
+      "\u25C8 secrets for agents [www.dotenvx.com]",
+      "\u2301 auth for agents [www.vestauth.com]",
+      "\u2318 custom filepath { path: '/custom/path/.env' }",
+      "\u2318 enable debugging { debug: true }",
+      "\u2318 override existing { override: true }",
+      "\u2318 suppress logs { quiet: true }",
+      "\u2318 multiple files { path: ['.env.local', '.env'] }"
+    ];
+    function _getRandomTip() {
+      return TIPS[Math.floor(Math.random() * TIPS.length)];
+    }
+    function parseBoolean(value) {
+      if (typeof value === "string") {
+        return !["false", "0", "no", "off", ""].includes(value.toLowerCase());
+      }
+      return Boolean(value);
+    }
+    function supportsAnsi() {
+      return process.stdout.isTTY;
+    }
+    function dim(text2) {
+      return supportsAnsi() ? `\x1B[2m${text2}\x1B[0m` : text2;
+    }
+    var LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
+    function parse3(src) {
+      const obj = {};
+      let lines = src.toString();
+      lines = lines.replace(/\r\n?/mg, "\n");
+      let match;
+      while ((match = LINE.exec(lines)) != null) {
+        const key = match[1];
+        let value = match[2] || "";
+        value = value.trim();
+        const maybeQuote = value[0];
+        value = value.replace(/^(['"`])([\s\S]*)\1$/mg, "$2");
+        if (maybeQuote === '"') {
+          value = value.replace(/\\n/g, "\n");
+          value = value.replace(/\\r/g, "\r");
+        }
+        obj[key] = value;
+      }
+      return obj;
+    }
+    function _parseVault(options) {
+      options = options || {};
+      const vaultPath = _vaultPath(options);
+      options.path = vaultPath;
+      const result = DotenvModule.configDotenv(options);
+      if (!result.parsed) {
+        const err = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
+        err.code = "MISSING_DATA";
+        throw err;
+      }
+      const keys = _dotenvKey(options).split(",");
+      const length = keys.length;
+      let decrypted;
+      for (let i = 0; i < length; i++) {
+        try {
+          const key = keys[i].trim();
+          const attrs = _instructions(result, key);
+          decrypted = DotenvModule.decrypt(attrs.ciphertext, attrs.key);
+          break;
+        } catch (error40) {
+          if (i + 1 >= length) {
+            throw error40;
+          }
+        }
+      }
+      return DotenvModule.parse(decrypted);
+    }
+    function _warn(message) {
+      console.error(`\u26A0 ${message}`);
+    }
+    function _debug(message) {
+      console.log(`\u2506 ${message}`);
+    }
+    function _log(message) {
+      console.log(`\u25C7 ${message}`);
+    }
+    function _dotenvKey(options) {
+      if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
+        return options.DOTENV_KEY;
+      }
+      if (process.env.DOTENV_KEY && process.env.DOTENV_KEY.length > 0) {
+        return process.env.DOTENV_KEY;
+      }
+      return "";
+    }
+    function _instructions(result, dotenvKey) {
+      let uri;
+      try {
+        uri = new URL(dotenvKey);
+      } catch (error40) {
+        if (error40.code === "ERR_INVALID_URL") {
+          const err = new Error("INVALID_DOTENV_KEY: Wrong format. Must be in valid uri format like dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development");
+          err.code = "INVALID_DOTENV_KEY";
+          throw err;
+        }
+        throw error40;
+      }
+      const key = uri.password;
+      if (!key) {
+        const err = new Error("INVALID_DOTENV_KEY: Missing key part");
+        err.code = "INVALID_DOTENV_KEY";
+        throw err;
+      }
+      const environment = uri.searchParams.get("environment");
+      if (!environment) {
+        const err = new Error("INVALID_DOTENV_KEY: Missing environment part");
+        err.code = "INVALID_DOTENV_KEY";
+        throw err;
+      }
+      const environmentKey = `DOTENV_VAULT_${environment.toUpperCase()}`;
+      const ciphertext = result.parsed[environmentKey];
+      if (!ciphertext) {
+        const err = new Error(`NOT_FOUND_DOTENV_ENVIRONMENT: Cannot locate environment ${environmentKey} in your .env.vault file.`);
+        err.code = "NOT_FOUND_DOTENV_ENVIRONMENT";
+        throw err;
+      }
+      return { ciphertext, key };
+    }
+    function _vaultPath(options) {
+      let possibleVaultPath = null;
+      if (options && options.path && options.path.length > 0) {
+        if (Array.isArray(options.path)) {
+          for (const filepath of options.path) {
+            if (fs.existsSync(filepath)) {
+              possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
+            }
+          }
+        } else {
+          possibleVaultPath = options.path.endsWith(".vault") ? options.path : `${options.path}.vault`;
+        }
+      } else {
+        possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
+      }
+      if (fs.existsSync(possibleVaultPath)) {
+        return possibleVaultPath;
+      }
+      return null;
+    }
+    function _resolveHome(envPath) {
+      return envPath[0] === "~" ? path.join(os.homedir(), envPath.slice(1)) : envPath;
+    }
+    function _configVault(options) {
+      const debug = parseBoolean(process.env.DOTENV_CONFIG_DEBUG || options && options.debug);
+      const quiet = parseBoolean(process.env.DOTENV_CONFIG_QUIET || options && options.quiet);
+      if (debug || !quiet) {
+        _log("loading env from encrypted .env.vault");
+      }
+      const parsed = DotenvModule._parseVault(options);
+      let processEnv = process.env;
+      if (options && options.processEnv != null) {
+        processEnv = options.processEnv;
+      }
+      DotenvModule.populate(processEnv, parsed, options);
+      return { parsed };
+    }
+    function configDotenv(options) {
+      const dotenvPath = path.resolve(process.cwd(), ".env");
+      let encoding = "utf8";
+      let processEnv = process.env;
+      if (options && options.processEnv != null) {
+        processEnv = options.processEnv;
+      }
+      let debug = parseBoolean(processEnv.DOTENV_CONFIG_DEBUG || options && options.debug);
+      let quiet = parseBoolean(processEnv.DOTENV_CONFIG_QUIET || options && options.quiet);
+      if (options && options.encoding) {
+        encoding = options.encoding;
+      } else {
+        if (debug) {
+          _debug("no encoding is specified (UTF-8 is used by default)");
+        }
+      }
+      let optionPaths = [dotenvPath];
+      if (options && options.path) {
+        if (!Array.isArray(options.path)) {
+          optionPaths = [_resolveHome(options.path)];
+        } else {
+          optionPaths = [];
+          for (const filepath of options.path) {
+            optionPaths.push(_resolveHome(filepath));
+          }
+        }
+      }
+      let lastError;
+      const parsedAll = {};
+      for (const path2 of optionPaths) {
+        try {
+          const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
+          DotenvModule.populate(parsedAll, parsed, options);
+        } catch (e) {
+          if (debug) {
+            _debug(`failed to load ${path2} ${e.message}`);
+          }
+          lastError = e;
+        }
+      }
+      const populated = DotenvModule.populate(processEnv, parsedAll, options);
+      debug = parseBoolean(processEnv.DOTENV_CONFIG_DEBUG || debug);
+      quiet = parseBoolean(processEnv.DOTENV_CONFIG_QUIET || quiet);
+      if (debug || !quiet) {
+        const keysCount = Object.keys(populated).length;
+        const shortPaths = [];
+        for (const filePath of optionPaths) {
+          try {
+            const relative = path.relative(process.cwd(), filePath);
+            shortPaths.push(relative);
+          } catch (e) {
+            if (debug) {
+              _debug(`failed to load ${filePath} ${e.message}`);
+            }
+            lastError = e;
+          }
+        }
+        _log(`injected env (${keysCount}) from ${shortPaths.join(",")} ${dim(`// tip: ${_getRandomTip()}`)}`);
+      }
+      if (lastError) {
+        return { parsed: parsedAll, error: lastError };
+      } else {
+        return { parsed: parsedAll };
+      }
+    }
+    function config4(options) {
+      if (_dotenvKey(options).length === 0) {
+        return DotenvModule.configDotenv(options);
+      }
+      const vaultPath = _vaultPath(options);
+      if (!vaultPath) {
+        _warn(`you set DOTENV_KEY but you are missing a .env.vault file at ${vaultPath}`);
+        return DotenvModule.configDotenv(options);
+      }
+      return DotenvModule._configVault(options);
+    }
+    function decrypt(encrypted, keyStr) {
+      const key = Buffer.from(keyStr.slice(-64), "hex");
+      let ciphertext = Buffer.from(encrypted, "base64");
+      const nonce = ciphertext.subarray(0, 12);
+      const authTag = ciphertext.subarray(-16);
+      ciphertext = ciphertext.subarray(12, -16);
+      try {
+        const aesgcm = crypto2.createDecipheriv("aes-256-gcm", key, nonce);
+        aesgcm.setAuthTag(authTag);
+        return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
+      } catch (error40) {
+        const isRange = error40 instanceof RangeError;
+        const invalidKeyLength = error40.message === "Invalid key length";
+        const decryptionFailed = error40.message === "Unsupported state or unable to authenticate data";
+        if (isRange || invalidKeyLength) {
+          const err = new Error("INVALID_DOTENV_KEY: It must be 64 characters long (or more)");
+          err.code = "INVALID_DOTENV_KEY";
+          throw err;
+        } else if (decryptionFailed) {
+          const err = new Error("DECRYPTION_FAILED: Please check your DOTENV_KEY");
+          err.code = "DECRYPTION_FAILED";
+          throw err;
+        } else {
+          throw error40;
+        }
+      }
+    }
+    function populate(processEnv, parsed, options = {}) {
+      const debug = Boolean(options && options.debug);
+      const override = Boolean(options && options.override);
+      const populated = {};
+      if (typeof parsed !== "object") {
+        const err = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
+        err.code = "OBJECT_REQUIRED";
+        throw err;
+      }
+      for (const key of Object.keys(parsed)) {
+        if (Object.prototype.hasOwnProperty.call(processEnv, key)) {
+          if (override === true) {
+            processEnv[key] = parsed[key];
+            populated[key] = parsed[key];
+          }
+          if (debug) {
+            if (override === true) {
+              _debug(`"${key}" is already defined and WAS overwritten`);
+            } else {
+              _debug(`"${key}" is already defined and was NOT overwritten`);
+            }
+          }
+        } else {
+          processEnv[key] = parsed[key];
+          populated[key] = parsed[key];
+        }
+      }
+      return populated;
+    }
+    var DotenvModule = {
+      configDotenv,
+      _configVault,
+      _parseVault,
+      config: config4,
+      decrypt,
+      parse: parse3,
+      populate
+    };
+    module.exports.configDotenv = DotenvModule.configDotenv;
+    module.exports._configVault = DotenvModule._configVault;
+    module.exports._parseVault = DotenvModule._parseVault;
+    module.exports.config = DotenvModule.config;
+    module.exports.decrypt = DotenvModule.decrypt;
+    module.exports.parse = DotenvModule.parse;
+    module.exports.populate = DotenvModule.populate;
+    module.exports = DotenvModule;
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/finish.js
+var require_finish = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/finish.js"(exports, module) {
+    "use strict";
+    module.exports = async function finish(item, transform2, ...details) {
+      await new Promise((resolve3, reject) => {
+        if (item.finished || item.complete) {
+          resolve3();
+          return;
+        }
+        let finished = false;
+        function done(err) {
+          if (finished) {
+            return;
+          }
+          finished = true;
+          item.removeListener("error", done);
+          item.removeListener("end", done);
+          item.removeListener("finish", done);
+          if (err) {
+            reject(err);
+          } else {
+            resolve3();
+          }
+        }
+        item.once("error", done);
+        item.once("end", done);
+        item.once("finish", done);
+      });
+      if (typeof transform2 === "function") {
+        await transform2(item, ...details);
+      } else if (typeof transform2 === "object" && transform2 !== null) {
+        Object.assign(item, transform2);
+      }
+      return item;
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/response.js
+var require_response = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/response.js"(exports, module) {
+    "use strict";
+    var http = __require("http");
+    var headerEnd = "\r\n\r\n";
+    var BODY = /* @__PURE__ */ Symbol();
+    var HEADERS = /* @__PURE__ */ Symbol();
+    function getString(data) {
+      if (Buffer.isBuffer(data)) {
+        return data.toString("utf8");
+      } else if (typeof data === "string") {
+        return data;
+      } else {
+        throw new Error(`response.write() of unexpected type: ${typeof data}`);
+      }
+    }
+    function addData(stream, data) {
+      if (Buffer.isBuffer(data) || typeof data === "string" || data instanceof Uint8Array) {
+        stream[BODY].push(Buffer.from(data));
+      } else {
+        throw new Error(`response.write() of unexpected type: ${typeof data}`);
+      }
+    }
+    module.exports = class ServerlessResponse extends http.ServerResponse {
+      static from(res) {
+        const response = new ServerlessResponse(res);
+        response.statusCode = res.statusCode;
+        response[HEADERS] = res.headers;
+        response[BODY] = [Buffer.from(res.body)];
+        response.end();
+        return response;
+      }
+      static body(res) {
+        return Buffer.concat(res[BODY]);
+      }
+      static headers(res) {
+        const headers = typeof res.getHeaders === "function" ? res.getHeaders() : res._headers;
+        return Object.assign(headers, res[HEADERS]);
+      }
+      get headers() {
+        return this[HEADERS];
+      }
+      setHeader(key, value) {
+        if (this._wroteHeader) {
+          this[HEADERS][key] = value;
+        } else {
+          super.setHeader(key, value);
+        }
+      }
+      writeHead(statusCode, reason, obj) {
+        const headers = typeof reason === "string" ? obj : reason;
+        for (const name in headers) {
+          this.setHeader(name, headers[name]);
+          if (!this._wroteHeader) {
+            break;
+          }
+        }
+        super.writeHead(statusCode, reason, obj);
+      }
+      constructor({ method }) {
+        super({ method });
+        this[BODY] = [];
+        this[HEADERS] = {};
+        this.useChunkedEncodingByDefault = false;
+        this.chunkedEncoding = false;
+        this._header = "";
+        this.assignSocket({
+          _writableState: {},
+          writable: true,
+          on: Function.prototype,
+          removeListener: Function.prototype,
+          destroy: Function.prototype,
+          cork: Function.prototype,
+          uncork: Function.prototype,
+          write: (data, encoding, cb) => {
+            if (typeof encoding === "function") {
+              cb = encoding;
+              encoding = null;
+            }
+            if (this._header === "" || this._wroteHeader) {
+              addData(this, data);
+            } else {
+              const string4 = getString(data);
+              const index = string4.indexOf(headerEnd);
+              if (index !== -1) {
+                const remainder = string4.slice(index + headerEnd.length);
+                if (remainder) {
+                  addData(this, remainder);
+                }
+                this._wroteHeader = true;
+              }
+            }
+            if (typeof cb === "function") {
+              cb();
+            }
+            return true;
+          }
+        });
+      }
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/framework/get-framework.js
+var require_get_framework = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/framework/get-framework.js"(exports, module) {
+    "use strict";
+    var http = __require("http");
+    var Response2 = require_response();
+    function common(cb) {
+      return (request) => {
+        const response = new Response2(request);
+        cb(request, response);
+        return response;
+      };
+    }
+    module.exports = function getFramework(app2) {
+      if (app2 instanceof http.Server) {
+        return (request) => {
+          const response = new Response2(request);
+          app2.emit("request", request, response);
+          return response;
+        };
+      }
+      if (typeof app2.callback === "function") {
+        return common(app2.callback());
+      }
+      if (typeof app2.handle === "function") {
+        return common((request, response) => {
+          app2.handle(request, response);
+        });
+      }
+      if (typeof app2.handler === "function") {
+        return common((request, response) => {
+          app2.handler(request, response);
+        });
+      }
+      if (typeof app2._onRequest === "function") {
+        return common((request, response) => {
+          app2._onRequest(request, response);
+        });
+      }
+      if (typeof app2 === "function") {
+        return common(app2);
+      }
+      if (app2.router && typeof app2.router.route == "function") {
+        return common((req, res) => {
+          const { url: url2, method, headers, body } = req;
+          app2.router.route({ url: url2, method, headers, body }, res);
+        });
+      }
+      if (app2._core && typeof app2._core._dispatch === "function") {
+        return common(app2._core._dispatch({
+          app: app2
+        }));
+      }
+      if (typeof app2.inject === "function") {
+        return async (request) => {
+          const { method, url: url2, headers, body } = request;
+          const res = await app2.inject({ method, url: url2, headers, payload: body });
+          return Response2.from(res);
+        };
+      }
+      if (typeof app2.main === "function") {
+        return common(app2.main);
+      }
+      throw new Error("Unsupported framework");
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/clean-up-event.js
+var require_clean_up_event = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/clean-up-event.js"(exports, module) {
+    "use strict";
+    function removeBasePath(path = "/", basePath) {
+      if (basePath) {
+        const basePathIndex = path.indexOf(basePath);
+        if (basePathIndex > -1) {
+          return path.substr(basePathIndex + basePath.length) || "/";
+        }
+      }
+      return path;
+    }
+    function isString(value) {
+      return typeof value === "string" || value instanceof String;
+    }
+    function specialDecodeURIComponent(value) {
+      if (!isString(value)) {
+        return value;
+      }
+      let decoded;
+      try {
+        decoded = decodeURIComponent(value.replace(/[+]/g, "%20"));
+      } catch (err) {
+        decoded = value.replace(/[+]/g, "%20");
+      }
+      return decoded;
+    }
+    function recursiveURLDecode(value) {
+      if (isString(value)) {
+        return specialDecodeURIComponent(value);
+      } else if (Array.isArray(value)) {
+        const decodedArray = [];
+        for (let index in value) {
+          decodedArray.push(recursiveURLDecode(value[index]));
+        }
+        return decodedArray;
+      } else if (value instanceof Object) {
+        const decodedObject = {};
+        for (let key of Object.keys(value)) {
+          decodedObject[specialDecodeURIComponent(key)] = recursiveURLDecode(value[key]);
+        }
+        return decodedObject;
+      }
+      return value;
+    }
+    module.exports = function cleanupEvent(evt, options) {
+      const event = evt || {};
+      event.requestContext = event.requestContext || {};
+      event.body = event.body || "";
+      event.headers = event.headers || {};
+      if ("elb" in event.requestContext) {
+        if (event.multiValueQueryStringParameters) {
+          event.multiValueQueryStringParameters = recursiveURLDecode(event.multiValueQueryStringParameters);
+        }
+        if (event.queryStringParameters) {
+          event.queryStringParameters = recursiveURLDecode(event.queryStringParameters);
+        }
+      }
+      if (event.version === "2.0") {
+        event.requestContext.authorizer = event.requestContext.authorizer || {};
+        event.requestContext.http.method = event.requestContext.http.method || "GET";
+        event.rawPath = removeBasePath(event.requestPath || event.rawPath, options.basePath);
+      } else {
+        event.requestContext.identity = event.requestContext.identity || {};
+        event.httpMethod = event.httpMethod || "GET";
+        event.path = removeBasePath(event.requestPath || event.path, options.basePath);
+      }
+      return event;
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/request.js
+var require_request = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/request.js"(exports, module) {
+    "use strict";
+    var http = __require("http");
+    var { PassThrough } = __require("stream");
+    module.exports = class ServerlessRequest extends http.IncomingMessage {
+      constructor({ method, url: url2, headers, body, remoteAddress }) {
+        const socket = new PassThrough();
+        socket.encrypted = true;
+        socket.remoteAddress = remoteAddress;
+        socket.address = () => ({ port: 443 });
+        super(socket);
+        if (typeof headers["content-length"] === "undefined") {
+          headers["content-length"] = Buffer.byteLength(body);
+        }
+        Object.assign(this, {
+          ip: remoteAddress,
+          complete: true,
+          httpVersion: "1.1",
+          httpVersionMajor: "1",
+          httpVersionMinor: "1",
+          method,
+          headers,
+          body,
+          url: url2
+        });
+        this._read = () => {
+          if (typeof body !== "undefined" && body !== null) {
+            this.push(body);
+          }
+          this.push(null);
+        };
+        if (!body || Buffer.byteLength(body) === 0) {
+          setImmediate(() => this.emit("end"));
+        }
+      }
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/create-request.js
+var require_create_request = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/create-request.js"(exports, module) {
+    "use strict";
+    var URL2 = __require("url");
+    var Request = require_request();
+    function requestMethod(event) {
+      if (event.version === "2.0") {
+        return event.requestContext.http.method;
+      }
+      return event.httpMethod;
+    }
+    function requestRemoteAddress(event) {
+      if (event.version === "2.0") {
+        return event.requestContext.http.sourceIp;
+      }
+      return event.requestContext.identity.sourceIp;
+    }
+    function requestHeaders(event) {
+      const initialHeader = event.version === "2.0" && Array.isArray(event.cookies) ? { cookie: event.cookies.join("; ") } : {};
+      if (event.multiValueHeaders) {
+        Object.keys(event.multiValueHeaders).reduce((headers, key) => {
+          headers[key.toLowerCase()] = event.multiValueHeaders[key].join(", ");
+          return headers;
+        }, initialHeader);
+      }
+      return Object.keys(event.headers).reduce((headers, key) => {
+        headers[key.toLowerCase()] = event.headers[key];
+        return headers;
+      }, initialHeader);
+    }
+    function requestBody(event) {
+      const type = typeof event.body;
+      if (Buffer.isBuffer(event.body)) {
+        return event.body;
+      } else if (type === "string") {
+        return Buffer.from(event.body, event.isBase64Encoded ? "base64" : "utf8");
+      } else if (type === "object") {
+        return Buffer.from(JSON.stringify(event.body));
+      }
+      throw new Error(`Unexpected event.body type: ${typeof event.body}`);
+    }
+    function requestUrl(event) {
+      if (event.version === "2.0") {
+        return URL2.format({
+          pathname: event.rawPath,
+          search: event.rawQueryString
+        });
+      }
+      const query = event.multiValueQueryStringParameters || {};
+      if (event.queryStringParameters) {
+        Object.keys(event.queryStringParameters).forEach((key) => {
+          if (Array.isArray(query[key])) {
+            if (!query[key].includes(event.queryStringParameters[key])) {
+              query[key].push(event.queryStringParameters[key]);
+            }
+          } else {
+            query[key] = [event.queryStringParameters[key]];
+          }
+        });
+      }
+      return URL2.format({
+        pathname: event.path,
+        query
+      });
+    }
+    module.exports = (event, context, options) => {
+      const method = requestMethod(event);
+      const remoteAddress = requestRemoteAddress(event);
+      const headers = requestHeaders(event);
+      const body = requestBody(event);
+      const url2 = requestUrl(event);
+      if (typeof options.requestId === "string" && options.requestId.length > 0) {
+        const header = options.requestId.toLowerCase();
+        const requestId = headers[header] || event.requestContext.requestId;
+        if (requestId) {
+          headers[header] = requestId;
+        }
+      }
+      const req = new Request({
+        method,
+        headers,
+        body,
+        remoteAddress,
+        url: url2
+      });
+      req.requestContext = event.requestContext;
+      req.apiGateway = {
+        event,
+        context
+      };
+      return req;
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/is-binary.js
+var require_is_binary = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/is-binary.js"(exports, module) {
+    "use strict";
+    var BINARY_ENCODINGS = ["gzip", "deflate", "br"];
+    var BINARY_CONTENT_TYPES = (process.env.BINARY_CONTENT_TYPES || "").split(",");
+    function isBinaryEncoding(headers) {
+      const contentEncoding = headers["content-encoding"];
+      if (typeof contentEncoding === "string") {
+        return contentEncoding.split(",").some(
+          (value) => BINARY_ENCODINGS.some((binaryEncoding) => value.indexOf(binaryEncoding) !== -1)
+        );
+      }
+    }
+    function isBinaryContent(headers, options) {
+      const contentTypes = [].concat(
+        options.binary ? options.binary : BINARY_CONTENT_TYPES
+      ).map(
+        (candidate) => new RegExp(`^${candidate.replace(/\*/g, ".*")}$`)
+      );
+      const contentType = (headers["content-type"] || "").split(";")[0];
+      return !!contentType && contentTypes.some((candidate) => candidate.test(contentType));
+    }
+    module.exports = function isBinary(headers, options) {
+      if (options.binary === false) {
+        return false;
+      }
+      if (options.binary === true) {
+        return true;
+      }
+      if (typeof options.binary === "function") {
+        return options.binary(headers);
+      }
+      return isBinaryEncoding(headers) || isBinaryContent(headers, options);
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/sanitize-headers.js
+var require_sanitize_headers = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/sanitize-headers.js"(exports, module) {
+    "use strict";
+    module.exports = function sanitizeHeaders(headers) {
+      return Object.keys(headers).reduce((memo, key) => {
+        const value = headers[key];
+        if (Array.isArray(value)) {
+          memo.multiValueHeaders[key] = value;
+          if (key.toLowerCase() !== "set-cookie") {
+            memo.headers[key] = value.join(", ");
+          }
+        } else {
+          memo.headers[key] = value == null ? "" : value.toString();
+        }
+        return memo;
+      }, {
+        headers: {},
+        multiValueHeaders: {}
+      });
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/get-event-type.js
+var require_get_event_type = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/get-event-type.js"(exports, module) {
+    var HTTP_API_V1 = "HTTP_API_V1";
+    var HTTP_API_V2 = "HTTP_API_V2";
+    var ALB = "ALB";
+    var LAMBDA_EVENT_TYPES = {
+      HTTP_API_V1,
+      HTTP_API_V2,
+      ALB
+    };
+    var getEventType = (event) => {
+      if (event.requestContext && event.requestContext.elb) {
+        return ALB;
+      } else if (event.version === "2.0") {
+        return HTTP_API_V2;
+      } else {
+        return HTTP_API_V1;
+      }
+    };
+    module.exports = {
+      getEventType,
+      LAMBDA_EVENT_TYPES
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/format-response.js
+var require_format_response = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/format-response.js"(exports, module) {
+    "use strict";
+    var isBinary = require_is_binary();
+    var Response2 = require_response();
+    var sanitizeHeaders = require_sanitize_headers();
+    var { getEventType, LAMBDA_EVENT_TYPES } = require_get_event_type();
+    var combineHeaders = (headers, multiValueHeaders) => {
+      return Object.entries(headers).reduce((memo, [key, value]) => {
+        if (multiValueHeaders[key]) {
+          memo[key].push(value);
+        } else {
+          memo[key] = [value];
+        }
+        return memo;
+      }, multiValueHeaders);
+    };
+    module.exports = (event, response, options) => {
+      const eventType = getEventType(event);
+      const { statusCode } = response;
+      const { headers, multiValueHeaders } = sanitizeHeaders(Response2.headers(response));
+      let cookies = [];
+      if (multiValueHeaders["set-cookie"]) {
+        cookies = multiValueHeaders["set-cookie"];
+      }
+      const isBase64Encoded = isBinary(headers, options);
+      const encoding = isBase64Encoded ? "base64" : "utf8";
+      let body = Response2.body(response).toString(encoding);
+      if (headers["transfer-encoding"] === "chunked" || response.chunkedEncoding) {
+        const raw = Response2.body(response).toString().split("\r\n");
+        const parsed = [];
+        for (let i = 0; i < raw.length; i += 2) {
+          const size = parseInt(raw[i], 16);
+          const value = raw[i + 1];
+          if (value) {
+            parsed.push(value.substring(0, size));
+          }
+        }
+        body = parsed.join("");
+      }
+      if (eventType === LAMBDA_EVENT_TYPES.ALB) {
+        const albResponse = { statusCode, isBase64Encoded, body };
+        if (event.multiValueHeaders) {
+          albResponse.multiValueHeaders = combineHeaders(headers, multiValueHeaders);
+        } else {
+          albResponse.headers = headers;
+        }
+        return albResponse;
+      }
+      if (eventType === LAMBDA_EVENT_TYPES.HTTP_API_V2) {
+        return { statusCode, isBase64Encoded, body, headers, cookies };
+      }
+      return { statusCode, isBase64Encoded, body, headers, multiValueHeaders };
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/index.js
+var require_aws = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/aws/index.js"(exports, module) {
+    var cleanUpEvent = require_clean_up_event();
+    var createRequest = require_create_request();
+    var formatResponse = require_format_response();
+    module.exports = (options) => {
+      return (getResponse) => async (event_, context = {}) => {
+        const event = cleanUpEvent(event_, options);
+        const request = createRequest(event, context, options);
+        const response = await getResponse(request, event, context);
+        return formatResponse(event, response, options);
+      };
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/clean-up-request.js
+var require_clean_up_request = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/clean-up-request.js"(exports, module) {
+    "use strict";
+    function getUrl({ requestPath, url: url2 }) {
+      if (requestPath) {
+        return requestPath;
+      }
+      return typeof url2 === "string" ? url2 : "/";
+    }
+    function getRequestContext(request) {
+      const requestContext = {};
+      requestContext.identity = {};
+      const forwardedIp = request.headers["x-forwarded-for"];
+      const clientIp = request.headers["client-ip"];
+      const ip = forwardedIp ? forwardedIp : clientIp ? clientIp : "";
+      if (ip) {
+        requestContext.identity.sourceIp = ip.split(":")[0];
+      }
+      return requestContext;
+    }
+    module.exports = function cleanupRequest(req, options) {
+      const request = req || {};
+      request.requestContext = getRequestContext(req);
+      request.method = request.method || "GET";
+      request.url = getUrl(request);
+      request.body = request.body || "";
+      request.headers = request.headers || {};
+      if (options.basePath) {
+        const basePathIndex = request.url.indexOf(options.basePath);
+        if (basePathIndex > -1) {
+          request.url = request.url.substr(basePathIndex + options.basePath.length);
+        }
+      }
+      return request;
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/create-request.js
+var require_create_request2 = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/create-request.js"(exports, module) {
+    "use strict";
+    var url2 = __require("url");
+    var Request = require_request();
+    function requestHeaders(request) {
+      return Object.keys(request.headers).reduce((headers, key) => {
+        headers[key.toLowerCase()] = request.headers[key];
+        return headers;
+      }, {});
+    }
+    function requestBody(request) {
+      const type = typeof request.rawBody;
+      if (Buffer.isBuffer(request.rawBody)) {
+        return request.rawBody;
+      } else if (type === "string") {
+        return Buffer.from(request.rawBody, "utf8");
+      } else if (type === "object") {
+        return Buffer.from(JSON.stringify(request.rawBody));
+      }
+      throw new Error(`Unexpected request.body type: ${typeof request.rawBody}`);
+    }
+    module.exports = (request) => {
+      const method = request.method;
+      const query = request.query;
+      const headers = requestHeaders(request);
+      const body = requestBody(request);
+      const req = new Request({
+        method,
+        headers,
+        body,
+        url: url2.format({
+          pathname: request.url,
+          query
+        })
+      });
+      req.requestContext = request.requestContext;
+      return req;
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/is-binary.js
+var require_is_binary2 = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/is-binary.js"(exports, module) {
+    "use strict";
+    var BINARY_ENCODINGS = ["gzip", "deflate", "br"];
+    var BINARY_CONTENT_TYPES = (process.env.BINARY_CONTENT_TYPES || "").split(",");
+    function isBinaryEncoding(headers) {
+      const contentEncoding = headers["content-encoding"];
+      if (typeof contentEncoding === "string") {
+        return contentEncoding.split(",").some(
+          (value) => BINARY_ENCODINGS.some((binaryEncoding) => value.indexOf(binaryEncoding) !== -1)
+        );
+      }
+    }
+    function isBinaryContent(headers, options) {
+      const contentTypes = [].concat(
+        options.binary ? options.binary : BINARY_CONTENT_TYPES
+      ).map(
+        (candidate) => new RegExp(`^${candidate.replace(/\*/g, ".*")}$`)
+      );
+      const contentType = (headers["content-type"] || "").split(";")[0];
+      return !!contentType && contentTypes.some((candidate) => candidate.test(contentType));
+    }
+    module.exports = function isBinary(headers, options) {
+      if (options.binary === false) {
+        return false;
+      }
+      if (options.binary === true) {
+        return true;
+      }
+      if (typeof options.binary === "function") {
+        return options.binary(headers);
+      }
+      return isBinaryEncoding(headers) || isBinaryContent(headers, options);
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/set-cookie.json
+var require_set_cookie = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/set-cookie.json"(exports, module) {
+    module.exports = { variations: ["set-cookie", "Set-cookie", "sEt-cookie", "SEt-cookie", "seT-cookie", "SeT-cookie", "sET-cookie", "SET-cookie", "set-Cookie", "Set-Cookie", "sEt-Cookie", "SEt-Cookie", "seT-Cookie", "SeT-Cookie", "sET-Cookie", "SET-Cookie", "set-cOokie", "Set-cOokie", "sEt-cOokie", "SEt-cOokie", "seT-cOokie", "SeT-cOokie", "sET-cOokie", "SET-cOokie", "set-COokie", "Set-COokie", "sEt-COokie", "SEt-COokie", "seT-COokie", "SeT-COokie", "sET-COokie", "SET-COokie", "set-coOkie", "Set-coOkie", "sEt-coOkie", "SEt-coOkie", "seT-coOkie", "SeT-coOkie", "sET-coOkie", "SET-coOkie", "set-CoOkie", "Set-CoOkie", "sEt-CoOkie", "SEt-CoOkie", "seT-CoOkie", "SeT-CoOkie", "sET-CoOkie", "SET-CoOkie", "set-cOOkie", "Set-cOOkie", "sEt-cOOkie", "SEt-cOOkie", "seT-cOOkie", "SeT-cOOkie", "sET-cOOkie", "SET-cOOkie", "set-COOkie", "Set-COOkie", "sEt-COOkie", "SEt-COOkie", "seT-COOkie", "SeT-COOkie", "sET-COOkie", "SET-COOkie", "set-cooKie", "Set-cooKie", "sEt-cooKie", "SEt-cooKie", "seT-cooKie", "SeT-cooKie", "sET-cooKie", "SET-cooKie", "set-CooKie", "Set-CooKie", "sEt-CooKie", "SEt-CooKie", "seT-CooKie", "SeT-CooKie", "sET-CooKie", "SET-CooKie", "set-cOoKie", "Set-cOoKie", "sEt-cOoKie", "SEt-cOoKie", "seT-cOoKie", "SeT-cOoKie", "sET-cOoKie", "SET-cOoKie", "set-COoKie", "Set-COoKie", "sEt-COoKie", "SEt-COoKie", "seT-COoKie", "SeT-COoKie", "sET-COoKie", "SET-COoKie", "set-coOKie", "Set-coOKie", "sEt-coOKie", "SEt-coOKie", "seT-coOKie", "SeT-coOKie", "sET-coOKie", "SET-coOKie", "set-CoOKie", "Set-CoOKie", "sEt-CoOKie", "SEt-CoOKie", "seT-CoOKie", "SeT-CoOKie", "sET-CoOKie", "SET-CoOKie", "set-cOOKie", "Set-cOOKie", "sEt-cOOKie", "SEt-cOOKie", "seT-cOOKie", "SeT-cOOKie", "sET-cOOKie", "SET-cOOKie", "set-COOKie", "Set-COOKie", "sEt-COOKie", "SEt-COOKie", "seT-COOKie", "SeT-COOKie", "sET-COOKie", "SET-COOKie", "set-cookIe", "Set-cookIe", "sEt-cookIe", "SEt-cookIe", "seT-cookIe", "SeT-cookIe", "sET-cookIe", "SET-cookIe", "set-CookIe", "Set-CookIe", "sEt-CookIe", "SEt-CookIe", "seT-CookIe", "SeT-CookIe", "sET-CookIe", "SET-CookIe", "set-cOokIe", "Set-cOokIe", "sEt-cOokIe", "SEt-cOokIe", "seT-cOokIe", "SeT-cOokIe", "sET-cOokIe", "SET-cOokIe", "set-COokIe", "Set-COokIe", "sEt-COokIe", "SEt-COokIe", "seT-COokIe", "SeT-COokIe", "sET-COokIe", "SET-COokIe", "set-coOkIe", "Set-coOkIe", "sEt-coOkIe", "SEt-coOkIe", "seT-coOkIe", "SeT-coOkIe", "sET-coOkIe", "SET-coOkIe", "set-CoOkIe", "Set-CoOkIe", "sEt-CoOkIe", "SEt-CoOkIe", "seT-CoOkIe", "SeT-CoOkIe", "sET-CoOkIe", "SET-CoOkIe", "set-cOOkIe", "Set-cOOkIe", "sEt-cOOkIe", "SEt-cOOkIe", "seT-cOOkIe", "SeT-cOOkIe", "sET-cOOkIe", "SET-cOOkIe", "set-COOkIe", "Set-COOkIe", "sEt-COOkIe", "SEt-COOkIe", "seT-COOkIe", "SeT-COOkIe", "sET-COOkIe", "SET-COOkIe", "set-cooKIe", "Set-cooKIe", "sEt-cooKIe", "SEt-cooKIe", "seT-cooKIe", "SeT-cooKIe", "sET-cooKIe", "SET-cooKIe", "set-CooKIe", "Set-CooKIe", "sEt-CooKIe", "SEt-CooKIe", "seT-CooKIe", "SeT-CooKIe", "sET-CooKIe", "SET-CooKIe", "set-cOoKIe", "Set-cOoKIe", "sEt-cOoKIe", "SEt-cOoKIe", "seT-cOoKIe", "SeT-cOoKIe", "sET-cOoKIe", "SET-cOoKIe", "set-COoKIe", "Set-COoKIe", "sEt-COoKIe", "SEt-COoKIe", "seT-COoKIe", "SeT-COoKIe", "sET-COoKIe", "SET-COoKIe", "set-coOKIe", "Set-coOKIe", "sEt-coOKIe", "SEt-coOKIe", "seT-coOKIe", "SeT-coOKIe", "sET-coOKIe", "SET-coOKIe", "set-CoOKIe", "Set-CoOKIe", "sEt-CoOKIe", "SEt-CoOKIe", "seT-CoOKIe", "SeT-CoOKIe", "sET-CoOKIe", "SET-CoOKIe", "set-cOOKIe", "Set-cOOKIe", "sEt-cOOKIe", "SEt-cOOKIe", "seT-cOOKIe", "SeT-cOOKIe", "sET-cOOKIe", "SET-cOOKIe", "set-COOKIe", "Set-COOKIe", "sEt-COOKIe", "SEt-COOKIe", "seT-COOKIe", "SeT-COOKIe", "sET-COOKIe", "SET-COOKIe", "set-cookiE", "Set-cookiE", "sEt-cookiE", "SEt-cookiE", "seT-cookiE", "SeT-cookiE", "sET-cookiE", "SET-cookiE", "set-CookiE", "Set-CookiE", "sEt-CookiE", "SEt-CookiE", "seT-CookiE", "SeT-CookiE", "sET-CookiE", "SET-CookiE", "set-cOokiE", "Set-cOokiE", "sEt-cOokiE", "SEt-cOokiE", "seT-cOokiE", "SeT-cOokiE", "sET-cOokiE", "SET-cOokiE", "set-COokiE", "Set-COokiE", "sEt-COokiE", "SEt-COokiE", "seT-COokiE", "SeT-COokiE", "sET-COokiE", "SET-COokiE", "set-coOkiE", "Set-coOkiE", "sEt-coOkiE", "SEt-coOkiE", "seT-coOkiE", "SeT-coOkiE", "sET-coOkiE", "SET-coOkiE", "set-CoOkiE", "Set-CoOkiE", "sEt-CoOkiE", "SEt-CoOkiE", "seT-CoOkiE", "SeT-CoOkiE", "sET-CoOkiE", "SET-CoOkiE", "set-cOOkiE", "Set-cOOkiE", "sEt-cOOkiE", "SEt-cOOkiE", "seT-cOOkiE", "SeT-cOOkiE", "sET-cOOkiE", "SET-cOOkiE", "set-COOkiE", "Set-COOkiE", "sEt-COOkiE", "SEt-COOkiE", "seT-COOkiE", "SeT-COOkiE", "sET-COOkiE", "SET-COOkiE", "set-cooKiE", "Set-cooKiE", "sEt-cooKiE", "SEt-cooKiE", "seT-cooKiE", "SeT-cooKiE", "sET-cooKiE", "SET-cooKiE", "set-CooKiE", "Set-CooKiE", "sEt-CooKiE", "SEt-CooKiE", "seT-CooKiE", "SeT-CooKiE", "sET-CooKiE", "SET-CooKiE", "set-cOoKiE", "Set-cOoKiE", "sEt-cOoKiE", "SEt-cOoKiE", "seT-cOoKiE", "SeT-cOoKiE", "sET-cOoKiE", "SET-cOoKiE", "set-COoKiE", "Set-COoKiE", "sEt-COoKiE", "SEt-COoKiE", "seT-COoKiE", "SeT-COoKiE", "sET-COoKiE", "SET-COoKiE", "set-coOKiE", "Set-coOKiE", "sEt-coOKiE", "SEt-coOKiE", "seT-coOKiE", "SeT-coOKiE", "sET-coOKiE", "SET-coOKiE", "set-CoOKiE", "Set-CoOKiE", "sEt-CoOKiE", "SEt-CoOKiE", "seT-CoOKiE", "SeT-CoOKiE", "sET-CoOKiE", "SET-CoOKiE", "set-cOOKiE", "Set-cOOKiE", "sEt-cOOKiE", "SEt-cOOKiE", "seT-cOOKiE", "SeT-cOOKiE", "sET-cOOKiE", "SET-cOOKiE", "set-COOKiE", "Set-COOKiE", "sEt-COOKiE", "SEt-COOKiE", "seT-COOKiE", "SeT-COOKiE", "sET-COOKiE", "SET-COOKiE", "set-cookIE", "Set-cookIE", "sEt-cookIE", "SEt-cookIE", "seT-cookIE", "SeT-cookIE", "sET-cookIE", "SET-cookIE", "set-CookIE", "Set-CookIE", "sEt-CookIE", "SEt-CookIE", "seT-CookIE", "SeT-CookIE", "sET-CookIE", "SET-CookIE", "set-cOokIE", "Set-cOokIE", "sEt-cOokIE", "SEt-cOokIE", "seT-cOokIE", "SeT-cOokIE", "sET-cOokIE", "SET-cOokIE", "set-COokIE", "Set-COokIE", "sEt-COokIE", "SEt-COokIE", "seT-COokIE", "SeT-COokIE", "sET-COokIE", "SET-COokIE", "set-coOkIE", "Set-coOkIE", "sEt-coOkIE", "SEt-coOkIE", "seT-coOkIE", "SeT-coOkIE", "sET-coOkIE", "SET-coOkIE", "set-CoOkIE", "Set-CoOkIE", "sEt-CoOkIE", "SEt-CoOkIE", "seT-CoOkIE", "SeT-CoOkIE", "sET-CoOkIE", "SET-CoOkIE", "set-cOOkIE", "Set-cOOkIE", "sEt-cOOkIE", "SEt-cOOkIE", "seT-cOOkIE", "SeT-cOOkIE", "sET-cOOkIE", "SET-cOOkIE", "set-COOkIE", "Set-COOkIE", "sEt-COOkIE", "SEt-COOkIE", "seT-COOkIE", "SeT-COOkIE", "sET-COOkIE", "SET-COOkIE", "set-cooKIE", "Set-cooKIE", "sEt-cooKIE", "SEt-cooKIE", "seT-cooKIE", "SeT-cooKIE", "sET-cooKIE", "SET-cooKIE", "set-CooKIE", "Set-CooKIE", "sEt-CooKIE", "SEt-CooKIE", "seT-CooKIE", "SeT-CooKIE", "sET-CooKIE", "SET-CooKIE", "set-cOoKIE", "Set-cOoKIE", "sEt-cOoKIE", "SEt-cOoKIE", "seT-cOoKIE", "SeT-cOoKIE", "sET-cOoKIE", "SET-cOoKIE", "set-COoKIE", "Set-COoKIE", "sEt-COoKIE", "SEt-COoKIE", "seT-COoKIE", "SeT-COoKIE", "sET-COoKIE", "SET-COoKIE", "set-coOKIE", "Set-coOKIE", "sEt-coOKIE", "SEt-coOKIE", "seT-coOKIE", "SeT-coOKIE", "sET-coOKIE", "SET-coOKIE", "set-CoOKIE", "Set-CoOKIE", "sEt-CoOKIE", "SEt-CoOKIE", "seT-CoOKIE", "SeT-CoOKIE", "sET-CoOKIE", "SET-CoOKIE", "set-cOOKIE", "Set-cOOKIE", "sEt-cOOKIE", "SEt-cOOKIE", "seT-cOOKIE", "SeT-cOOKIE", "sET-cOOKIE", "SET-cOOKIE", "set-COOKIE", "Set-COOKIE", "sEt-COOKIE", "SEt-COOKIE", "seT-COOKIE", "SeT-COOKIE", "sET-COOKIE", "SET-COOKIE"] };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/sanitize-headers.js
+var require_sanitize_headers2 = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/sanitize-headers.js"(exports, module) {
+    "use strict";
+    var setCookieVariations = require_set_cookie().variations;
+    module.exports = function sanitizeHeaders(headers) {
+      return Object.keys(headers).reduce((memo, key) => {
+        const value = headers[key];
+        if (Array.isArray(value)) {
+          if (key.toLowerCase() === "set-cookie") {
+            value.forEach((cookie, i) => {
+              memo[setCookieVariations[i]] = cookie;
+            });
+          } else {
+            memo[key] = value.join(", ");
+          }
+        } else {
+          memo[key] = value == null ? "" : value.toString();
+        }
+        return memo;
+      }, {});
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/format-response.js
+var require_format_response2 = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/format-response.js"(exports, module) {
+    var isBinary = require_is_binary2();
+    var Response2 = require_response();
+    var sanitizeHeaders = require_sanitize_headers2();
+    module.exports = (response, options) => {
+      const { statusCode } = response;
+      const headers = sanitizeHeaders(Response2.headers(response));
+      if (headers["transfer-encoding"] === "chunked" || response.chunkedEncoding) {
+        throw new Error("chunked encoding not supported");
+      }
+      const isBase64Encoded = isBinary(headers, options);
+      const encoding = isBase64Encoded ? "base64" : "utf8";
+      const body = Response2.body(response).toString(encoding);
+      return { status: statusCode, headers, isBase64Encoded, body };
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/index.js
+var require_azure = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/azure/index.js"(exports, module) {
+    var cleanupRequest = require_clean_up_request();
+    var createRequest = require_create_request2();
+    var formatResponse = require_format_response2();
+    module.exports = (options) => {
+      return (getResponse) => async (context, req) => {
+        const event = cleanupRequest(req, options);
+        const request = createRequest(event, options);
+        const response = await getResponse(request, context, event);
+        context.log(response);
+        return formatResponse(response, options);
+      };
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/get-provider.js
+var require_get_provider = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/lib/provider/get-provider.js"(exports, module) {
+    var aws = require_aws();
+    var azure = require_azure();
+    var providers = {
+      aws,
+      azure
+    };
+    module.exports = function getProvider(options) {
+      const { provider = "aws" } = options;
+      if (provider in providers) {
+        return providers[provider](options);
+      }
+      throw new Error(`Unsupported provider ${provider}`);
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/serverless-http.js
+var require_serverless_http = __commonJS({
+  "../../node_modules/.pnpm/serverless-http@4.0.0/node_modules/serverless-http/serverless-http.js"(exports, module) {
+    "use strict";
+    var finish = require_finish();
+    var getFramework = require_get_framework();
+    var getProvider = require_get_provider();
+    var defaultOptions = {
+      requestId: "x-request-id"
+    };
+    module.exports = function(app2, opts) {
+      const options = Object.assign({}, defaultOptions, opts);
+      const framework = getFramework(app2);
+      const provider = getProvider(options);
+      return provider(async (request, ...context) => {
+        await finish(request, options.request, ...context);
+        const response = await framework(request);
+        await finish(response, options.response, ...context);
+        response.emit("close");
+        return response;
+      });
+    };
+  }
+});
+
 // ../../node_modules/.pnpm/ms@2.1.3/node_modules/ms/index.js
 var require_ms = __commonJS({
   "../../node_modules/.pnpm/ms@2.1.3/node_modules/ms/index.js"(exports, module) {
@@ -5340,10 +6478,10 @@ var require_raw_body = __commonJS({
       if (done) {
         return readStream(stream, encoding, length, limit, wrap(done));
       }
-      return new Promise(function executor(resolve2, reject) {
+      return new Promise(function executor(resolve3, reject) {
         readStream(stream, encoding, length, limit, function onRead(err, buf) {
           if (err) return reject(err);
-          resolve2(buf);
+          resolve3(buf);
         });
       });
     }
@@ -18679,7 +19817,7 @@ var require_view = __commonJS({
     var basename = path.basename;
     var extname = path.extname;
     var join = path.join;
-    var resolve2 = path.resolve;
+    var resolve3 = path.resolve;
     module.exports = View2;
     function View2(name, options) {
       var opts = options || {};
@@ -18713,7 +19851,7 @@ var require_view = __commonJS({
       debug('lookup "%s"', name);
       for (var i = 0; i < roots.length && !path2; i++) {
         var root = roots[i];
-        var loc = resolve2(root, name);
+        var loc = resolve3(root, name);
         var dir = dirname(loc);
         var file2 = basename(loc);
         path2 = this.resolve(dir, file2);
@@ -18738,7 +19876,7 @@ var require_view = __commonJS({
       });
       sync = false;
     };
-    View2.prototype.resolve = function resolve3(dir, file2) {
+    View2.prototype.resolve = function resolve4(dir, file2) {
       var ext = this.ext;
       var path2 = join(dir, file2);
       var stat = tryStat(path2);
@@ -20429,7 +21567,7 @@ var require_route = __commonJS({
         sync = 0;
       }
     };
-    Route.prototype.all = function all(handler) {
+    Route.prototype.all = function all(handler2) {
       const callbacks = flatten.call(slice.call(arguments), Infinity);
       if (callbacks.length === 0) {
         throw new TypeError("argument handler is required");
@@ -20447,7 +21585,7 @@ var require_route = __commonJS({
       return this;
     };
     methods.forEach(function(method) {
-      Route.prototype[method] = function(handler) {
+      Route.prototype[method] = function(handler2) {
         const callbacks = flatten.call(slice.call(arguments), Infinity);
         if (callbacks.length === 0) {
           throw new TypeError("argument handler is required");
@@ -20650,17 +21788,17 @@ var require_router = __commonJS({
         }
       }
     };
-    Router6.prototype.use = function use(handler) {
+    Router6.prototype.use = function use(handler2) {
       let offset = 0;
       let path = "/";
-      if (typeof handler !== "function") {
-        let arg = handler;
+      if (typeof handler2 !== "function") {
+        let arg = handler2;
         while (Array.isArray(arg) && arg.length !== 0) {
           arg = arg[0];
         }
         if (typeof arg !== "function") {
           offset = 1;
-          path = handler;
+          path = handler2;
         }
       }
       const callbacks = flatten.call(slice.call(arguments, offset), Infinity);
@@ -20879,7 +22017,7 @@ var require_application = __commonJS({
     var compileETag = require_utils3().compileETag;
     var compileQueryParser = require_utils3().compileQueryParser;
     var compileTrust = require_utils3().compileTrust;
-    var resolve2 = __require("node:path").resolve;
+    var resolve3 = __require("node:path").resolve;
     var once = require_once();
     var Router6 = require_router();
     var slice = Array.prototype.slice;
@@ -20933,7 +22071,7 @@ var require_application = __commonJS({
       this.mountpath = "/";
       this.locals.settings = this.settings;
       this.set("view", View2);
-      this.set("views", resolve2("views"));
+      this.set("views", resolve3("views"));
       this.set("jsonp callback name", "callback");
       if (env === "production") {
         this.enable("view cache");
@@ -21876,7 +23014,7 @@ var require_range_parser = __commonJS({
 });
 
 // ../../node_modules/.pnpm/express@5.2.1/node_modules/express/lib/request.js
-var require_request = __commonJS({
+var require_request2 = __commonJS({
   "../../node_modules/.pnpm/express@5.2.1/node_modules/express/lib/request.js"(exports, module) {
     "use strict";
     var accepts = require_accepts();
@@ -22392,7 +23530,7 @@ var require_send = __commonJS({
     var extname = path.extname;
     var join = path.join;
     var normalize = path.normalize;
-    var resolve2 = path.resolve;
+    var resolve3 = path.resolve;
     var sep = path.sep;
     var BYTES_RANGE_REGEXP = /^ *bytes=/;
     var MAX_MAXAGE = 60 * 60 * 24 * 365 * 1e3;
@@ -22421,7 +23559,7 @@ var require_send = __commonJS({
       this._maxage = opts.maxAge || opts.maxage;
       this._maxage = typeof this._maxage === "string" ? ms(this._maxage) : Number(this._maxage);
       this._maxage = !isNaN(this._maxage) ? Math.min(Math.max(0, this._maxage), MAX_MAXAGE) : 0;
-      this._root = opts.root ? resolve2(opts.root) : null;
+      this._root = opts.root ? resolve3(opts.root) : null;
     }
     util2.inherits(SendStream, Stream);
     SendStream.prototype.error = function error40(status, err) {
@@ -22570,7 +23708,7 @@ var require_send = __commonJS({
           return res;
         }
         parts = normalize(path2).split(sep);
-        path2 = resolve2(path2);
+        path2 = resolve3(path2);
       }
       if (containsDotFile(parts)) {
         debug('%s dotfile "%s"', this._dotfiles, path2);
@@ -22927,7 +24065,7 @@ var require_vary = __commonJS({
 });
 
 // ../../node_modules/.pnpm/express@5.2.1/node_modules/express/lib/response.js
-var require_response = __commonJS({
+var require_response2 = __commonJS({
   "../../node_modules/.pnpm/express@5.2.1/node_modules/express/lib/response.js"(exports, module) {
     "use strict";
     var contentDisposition = require_content_disposition();
@@ -22948,7 +24086,7 @@ var require_response = __commonJS({
     var cookie = require_cookie();
     var send = require_send();
     var extname = path.extname;
-    var resolve2 = path.resolve;
+    var resolve3 = path.resolve;
     var vary = require_vary();
     var { Buffer: Buffer2 } = __require("node:buffer");
     var res = Object.create(http.ServerResponse.prototype);
@@ -23154,7 +24292,7 @@ var require_response = __commonJS({
       }
       opts = Object.create(opts);
       opts.headers = headers;
-      var fullPath = !opts.root ? resolve2(path2) : path2;
+      var fullPath = !opts.root ? resolve3(path2) : path2;
       return this.sendFile(fullPath, opts, done);
     };
     res.contentType = res.type = function contentType(type) {
@@ -23403,7 +24541,7 @@ var require_serve_static = __commonJS({
     var encodeUrl = require_encodeurl();
     var escapeHtml = require_escape_html();
     var parseUrl = require_parseurl();
-    var resolve2 = __require("path").resolve;
+    var resolve3 = __require("path").resolve;
     var send = require_send();
     var url2 = __require("url");
     module.exports = serveStatic;
@@ -23422,7 +24560,7 @@ var require_serve_static = __commonJS({
         throw new TypeError("option setHeaders must be function");
       }
       opts.maxage = opts.maxage || opts.maxAge || 0;
-      opts.root = resolve2(root);
+      opts.root = resolve3(root);
       var onDirectory = redirect ? createRedirectDirectoryListener() : createNotFoundDirectoryListener();
       return function serveStatic2(req, res, next) {
         if (req.method !== "GET" && req.method !== "HEAD") {
@@ -23509,8 +24647,8 @@ var require_express = __commonJS({
     var mixin = require_merge_descriptors();
     var proto = require_application();
     var Router6 = require_router();
-    var req = require_request();
-    var res = require_response();
+    var req = require_request2();
+    var res = require_response2();
     exports = module.exports = createApplication;
     function createApplication() {
       var app2 = function(req2, res2, next) {
@@ -28379,325 +29517,6 @@ var require_logger = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/dotenv@17.4.1/node_modules/dotenv/lib/main.js
-var require_main = __commonJS({
-  "../../node_modules/.pnpm/dotenv@17.4.1/node_modules/dotenv/lib/main.js"(exports, module) {
-    var fs = __require("fs");
-    var path = __require("path");
-    var os = __require("os");
-    var crypto2 = __require("crypto");
-    var TIPS = [
-      "\u25C8 encrypted .env [www.dotenvx.com]",
-      "\u25C8 secrets for agents [www.dotenvx.com]",
-      "\u2301 auth for agents [www.vestauth.com]",
-      "\u2318 custom filepath { path: '/custom/path/.env' }",
-      "\u2318 enable debugging { debug: true }",
-      "\u2318 override existing { override: true }",
-      "\u2318 suppress logs { quiet: true }",
-      "\u2318 multiple files { path: ['.env.local', '.env'] }"
-    ];
-    function _getRandomTip() {
-      return TIPS[Math.floor(Math.random() * TIPS.length)];
-    }
-    function parseBoolean(value) {
-      if (typeof value === "string") {
-        return !["false", "0", "no", "off", ""].includes(value.toLowerCase());
-      }
-      return Boolean(value);
-    }
-    function supportsAnsi() {
-      return process.stdout.isTTY;
-    }
-    function dim(text2) {
-      return supportsAnsi() ? `\x1B[2m${text2}\x1B[0m` : text2;
-    }
-    var LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
-    function parse3(src) {
-      const obj = {};
-      let lines = src.toString();
-      lines = lines.replace(/\r\n?/mg, "\n");
-      let match;
-      while ((match = LINE.exec(lines)) != null) {
-        const key = match[1];
-        let value = match[2] || "";
-        value = value.trim();
-        const maybeQuote = value[0];
-        value = value.replace(/^(['"`])([\s\S]*)\1$/mg, "$2");
-        if (maybeQuote === '"') {
-          value = value.replace(/\\n/g, "\n");
-          value = value.replace(/\\r/g, "\r");
-        }
-        obj[key] = value;
-      }
-      return obj;
-    }
-    function _parseVault(options) {
-      options = options || {};
-      const vaultPath = _vaultPath(options);
-      options.path = vaultPath;
-      const result = DotenvModule.configDotenv(options);
-      if (!result.parsed) {
-        const err = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
-        err.code = "MISSING_DATA";
-        throw err;
-      }
-      const keys = _dotenvKey(options).split(",");
-      const length = keys.length;
-      let decrypted;
-      for (let i = 0; i < length; i++) {
-        try {
-          const key = keys[i].trim();
-          const attrs = _instructions(result, key);
-          decrypted = DotenvModule.decrypt(attrs.ciphertext, attrs.key);
-          break;
-        } catch (error40) {
-          if (i + 1 >= length) {
-            throw error40;
-          }
-        }
-      }
-      return DotenvModule.parse(decrypted);
-    }
-    function _warn(message) {
-      console.error(`\u26A0 ${message}`);
-    }
-    function _debug(message) {
-      console.log(`\u2506 ${message}`);
-    }
-    function _log(message) {
-      console.log(`\u25C7 ${message}`);
-    }
-    function _dotenvKey(options) {
-      if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
-        return options.DOTENV_KEY;
-      }
-      if (process.env.DOTENV_KEY && process.env.DOTENV_KEY.length > 0) {
-        return process.env.DOTENV_KEY;
-      }
-      return "";
-    }
-    function _instructions(result, dotenvKey) {
-      let uri;
-      try {
-        uri = new URL(dotenvKey);
-      } catch (error40) {
-        if (error40.code === "ERR_INVALID_URL") {
-          const err = new Error("INVALID_DOTENV_KEY: Wrong format. Must be in valid uri format like dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development");
-          err.code = "INVALID_DOTENV_KEY";
-          throw err;
-        }
-        throw error40;
-      }
-      const key = uri.password;
-      if (!key) {
-        const err = new Error("INVALID_DOTENV_KEY: Missing key part");
-        err.code = "INVALID_DOTENV_KEY";
-        throw err;
-      }
-      const environment = uri.searchParams.get("environment");
-      if (!environment) {
-        const err = new Error("INVALID_DOTENV_KEY: Missing environment part");
-        err.code = "INVALID_DOTENV_KEY";
-        throw err;
-      }
-      const environmentKey = `DOTENV_VAULT_${environment.toUpperCase()}`;
-      const ciphertext = result.parsed[environmentKey];
-      if (!ciphertext) {
-        const err = new Error(`NOT_FOUND_DOTENV_ENVIRONMENT: Cannot locate environment ${environmentKey} in your .env.vault file.`);
-        err.code = "NOT_FOUND_DOTENV_ENVIRONMENT";
-        throw err;
-      }
-      return { ciphertext, key };
-    }
-    function _vaultPath(options) {
-      let possibleVaultPath = null;
-      if (options && options.path && options.path.length > 0) {
-        if (Array.isArray(options.path)) {
-          for (const filepath of options.path) {
-            if (fs.existsSync(filepath)) {
-              possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
-            }
-          }
-        } else {
-          possibleVaultPath = options.path.endsWith(".vault") ? options.path : `${options.path}.vault`;
-        }
-      } else {
-        possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
-      }
-      if (fs.existsSync(possibleVaultPath)) {
-        return possibleVaultPath;
-      }
-      return null;
-    }
-    function _resolveHome(envPath) {
-      return envPath[0] === "~" ? path.join(os.homedir(), envPath.slice(1)) : envPath;
-    }
-    function _configVault(options) {
-      const debug = parseBoolean(process.env.DOTENV_CONFIG_DEBUG || options && options.debug);
-      const quiet = parseBoolean(process.env.DOTENV_CONFIG_QUIET || options && options.quiet);
-      if (debug || !quiet) {
-        _log("loading env from encrypted .env.vault");
-      }
-      const parsed = DotenvModule._parseVault(options);
-      let processEnv = process.env;
-      if (options && options.processEnv != null) {
-        processEnv = options.processEnv;
-      }
-      DotenvModule.populate(processEnv, parsed, options);
-      return { parsed };
-    }
-    function configDotenv(options) {
-      const dotenvPath = path.resolve(process.cwd(), ".env");
-      let encoding = "utf8";
-      let processEnv = process.env;
-      if (options && options.processEnv != null) {
-        processEnv = options.processEnv;
-      }
-      let debug = parseBoolean(processEnv.DOTENV_CONFIG_DEBUG || options && options.debug);
-      let quiet = parseBoolean(processEnv.DOTENV_CONFIG_QUIET || options && options.quiet);
-      if (options && options.encoding) {
-        encoding = options.encoding;
-      } else {
-        if (debug) {
-          _debug("no encoding is specified (UTF-8 is used by default)");
-        }
-      }
-      let optionPaths = [dotenvPath];
-      if (options && options.path) {
-        if (!Array.isArray(options.path)) {
-          optionPaths = [_resolveHome(options.path)];
-        } else {
-          optionPaths = [];
-          for (const filepath of options.path) {
-            optionPaths.push(_resolveHome(filepath));
-          }
-        }
-      }
-      let lastError;
-      const parsedAll = {};
-      for (const path2 of optionPaths) {
-        try {
-          const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
-          DotenvModule.populate(parsedAll, parsed, options);
-        } catch (e) {
-          if (debug) {
-            _debug(`failed to load ${path2} ${e.message}`);
-          }
-          lastError = e;
-        }
-      }
-      const populated = DotenvModule.populate(processEnv, parsedAll, options);
-      debug = parseBoolean(processEnv.DOTENV_CONFIG_DEBUG || debug);
-      quiet = parseBoolean(processEnv.DOTENV_CONFIG_QUIET || quiet);
-      if (debug || !quiet) {
-        const keysCount = Object.keys(populated).length;
-        const shortPaths = [];
-        for (const filePath of optionPaths) {
-          try {
-            const relative = path.relative(process.cwd(), filePath);
-            shortPaths.push(relative);
-          } catch (e) {
-            if (debug) {
-              _debug(`failed to load ${filePath} ${e.message}`);
-            }
-            lastError = e;
-          }
-        }
-        _log(`injected env (${keysCount}) from ${shortPaths.join(",")} ${dim(`// tip: ${_getRandomTip()}`)}`);
-      }
-      if (lastError) {
-        return { parsed: parsedAll, error: lastError };
-      } else {
-        return { parsed: parsedAll };
-      }
-    }
-    function config3(options) {
-      if (_dotenvKey(options).length === 0) {
-        return DotenvModule.configDotenv(options);
-      }
-      const vaultPath = _vaultPath(options);
-      if (!vaultPath) {
-        _warn(`you set DOTENV_KEY but you are missing a .env.vault file at ${vaultPath}`);
-        return DotenvModule.configDotenv(options);
-      }
-      return DotenvModule._configVault(options);
-    }
-    function decrypt(encrypted, keyStr) {
-      const key = Buffer.from(keyStr.slice(-64), "hex");
-      let ciphertext = Buffer.from(encrypted, "base64");
-      const nonce = ciphertext.subarray(0, 12);
-      const authTag = ciphertext.subarray(-16);
-      ciphertext = ciphertext.subarray(12, -16);
-      try {
-        const aesgcm = crypto2.createDecipheriv("aes-256-gcm", key, nonce);
-        aesgcm.setAuthTag(authTag);
-        return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
-      } catch (error40) {
-        const isRange = error40 instanceof RangeError;
-        const invalidKeyLength = error40.message === "Invalid key length";
-        const decryptionFailed = error40.message === "Unsupported state or unable to authenticate data";
-        if (isRange || invalidKeyLength) {
-          const err = new Error("INVALID_DOTENV_KEY: It must be 64 characters long (or more)");
-          err.code = "INVALID_DOTENV_KEY";
-          throw err;
-        } else if (decryptionFailed) {
-          const err = new Error("DECRYPTION_FAILED: Please check your DOTENV_KEY");
-          err.code = "DECRYPTION_FAILED";
-          throw err;
-        } else {
-          throw error40;
-        }
-      }
-    }
-    function populate(processEnv, parsed, options = {}) {
-      const debug = Boolean(options && options.debug);
-      const override = Boolean(options && options.override);
-      const populated = {};
-      if (typeof parsed !== "object") {
-        const err = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
-        err.code = "OBJECT_REQUIRED";
-        throw err;
-      }
-      for (const key of Object.keys(parsed)) {
-        if (Object.prototype.hasOwnProperty.call(processEnv, key)) {
-          if (override === true) {
-            processEnv[key] = parsed[key];
-            populated[key] = parsed[key];
-          }
-          if (debug) {
-            if (override === true) {
-              _debug(`"${key}" is already defined and WAS overwritten`);
-            } else {
-              _debug(`"${key}" is already defined and was NOT overwritten`);
-            }
-          }
-        } else {
-          processEnv[key] = parsed[key];
-          populated[key] = parsed[key];
-        }
-      }
-      return populated;
-    }
-    var DotenvModule = {
-      configDotenv,
-      _configVault,
-      _parseVault,
-      config: config3,
-      decrypt,
-      parse: parse3,
-      populate
-    };
-    module.exports.configDotenv = DotenvModule.configDotenv;
-    module.exports._configVault = DotenvModule._configVault;
-    module.exports._parseVault = DotenvModule._parseVault;
-    module.exports.config = DotenvModule.config;
-    module.exports.decrypt = DotenvModule.decrypt;
-    module.exports.parse = DotenvModule.parse;
-    module.exports.populate = DotenvModule.populate;
-    module.exports = DotenvModule;
-  }
-});
-
 // ../../node_modules/.pnpm/postgres-array@2.0.0/node_modules/postgres-array/index.js
 var require_postgres_array = __commonJS({
   "../../node_modules/.pnpm/postgres-array@2.0.0/node_modules/postgres-array/index.js"(exports) {
@@ -29801,19 +30620,19 @@ var require_utils4 = __commonJS({
       if (isBCYear) ret += " BC";
       return ret;
     }
-    function normalizeQueryConfig(config3, values, callback) {
-      config3 = typeof config3 === "string" ? { text: config3 } : config3;
+    function normalizeQueryConfig(config4, values, callback) {
+      config4 = typeof config4 === "string" ? { text: config4 } : config4;
       if (values) {
         if (typeof values === "function") {
-          config3.callback = values;
+          config4.callback = values;
         } else {
-          config3.values = values;
+          config4.values = values;
         }
       }
       if (callback) {
-        config3.callback = callback;
+        config4.callback = callback;
       }
-      return config3;
+      return config4;
     }
     var escapeIdentifier2 = function(str) {
       return '"' + str.replace(/"/g, '""') + '"';
@@ -30278,10 +31097,10 @@ var require_pg_connection_string = __commonJS({
     "use strict";
     function parse3(str, options = {}) {
       if (str.charAt(0) === "/") {
-        const config4 = str.split(" ");
-        return { host: config4[0], database: config4[1] };
+        const config5 = str.split(" ");
+        return { host: config5[0], database: config5[1] };
       }
-      const config3 = {};
+      const config4 = {};
       let result;
       let dummyHost = false;
       if (/ |%[^a-f0-9]|%[a-f0-9][^a-f0-9]/i.test(str)) {
@@ -30299,75 +31118,75 @@ var require_pg_connection_string = __commonJS({
         throw err;
       }
       for (const entry of result.searchParams.entries()) {
-        config3[entry[0]] = entry[1];
+        config4[entry[0]] = entry[1];
       }
-      config3.user = config3.user || decodeURIComponent(result.username);
-      config3.password = config3.password || decodeURIComponent(result.password);
+      config4.user = config4.user || decodeURIComponent(result.username);
+      config4.password = config4.password || decodeURIComponent(result.password);
       if (result.protocol == "socket:") {
-        config3.host = decodeURI(result.pathname);
-        config3.database = result.searchParams.get("db");
-        config3.client_encoding = result.searchParams.get("encoding");
-        return config3;
+        config4.host = decodeURI(result.pathname);
+        config4.database = result.searchParams.get("db");
+        config4.client_encoding = result.searchParams.get("encoding");
+        return config4;
       }
       const hostname2 = dummyHost ? "" : result.hostname;
-      if (!config3.host) {
-        config3.host = decodeURIComponent(hostname2);
+      if (!config4.host) {
+        config4.host = decodeURIComponent(hostname2);
       } else if (hostname2 && /^%2f/i.test(hostname2)) {
         result.pathname = hostname2 + result.pathname;
       }
-      if (!config3.port) {
-        config3.port = result.port;
+      if (!config4.port) {
+        config4.port = result.port;
       }
       const pathname = result.pathname.slice(1) || null;
-      config3.database = pathname ? decodeURI(pathname) : null;
-      if (config3.ssl === "true" || config3.ssl === "1") {
-        config3.ssl = true;
+      config4.database = pathname ? decodeURI(pathname) : null;
+      if (config4.ssl === "true" || config4.ssl === "1") {
+        config4.ssl = true;
       }
-      if (config3.ssl === "0") {
-        config3.ssl = false;
+      if (config4.ssl === "0") {
+        config4.ssl = false;
       }
-      if (config3.sslcert || config3.sslkey || config3.sslrootcert || config3.sslmode) {
-        config3.ssl = {};
+      if (config4.sslcert || config4.sslkey || config4.sslrootcert || config4.sslmode) {
+        config4.ssl = {};
       }
-      const fs = config3.sslcert || config3.sslkey || config3.sslrootcert ? __require("fs") : null;
-      if (config3.sslcert) {
-        config3.ssl.cert = fs.readFileSync(config3.sslcert).toString();
+      const fs = config4.sslcert || config4.sslkey || config4.sslrootcert ? __require("fs") : null;
+      if (config4.sslcert) {
+        config4.ssl.cert = fs.readFileSync(config4.sslcert).toString();
       }
-      if (config3.sslkey) {
-        config3.ssl.key = fs.readFileSync(config3.sslkey).toString();
+      if (config4.sslkey) {
+        config4.ssl.key = fs.readFileSync(config4.sslkey).toString();
       }
-      if (config3.sslrootcert) {
-        config3.ssl.ca = fs.readFileSync(config3.sslrootcert).toString();
+      if (config4.sslrootcert) {
+        config4.ssl.ca = fs.readFileSync(config4.sslrootcert).toString();
       }
-      if (options.useLibpqCompat && config3.uselibpqcompat) {
+      if (options.useLibpqCompat && config4.uselibpqcompat) {
         throw new Error("Both useLibpqCompat and uselibpqcompat are set. Please use only one of them.");
       }
-      if (config3.uselibpqcompat === "true" || options.useLibpqCompat) {
-        switch (config3.sslmode) {
+      if (config4.uselibpqcompat === "true" || options.useLibpqCompat) {
+        switch (config4.sslmode) {
           case "disable": {
-            config3.ssl = false;
+            config4.ssl = false;
             break;
           }
           case "prefer": {
-            config3.ssl.rejectUnauthorized = false;
+            config4.ssl.rejectUnauthorized = false;
             break;
           }
           case "require": {
-            if (config3.sslrootcert) {
-              config3.ssl.checkServerIdentity = function() {
+            if (config4.sslrootcert) {
+              config4.ssl.checkServerIdentity = function() {
               };
             } else {
-              config3.ssl.rejectUnauthorized = false;
+              config4.ssl.rejectUnauthorized = false;
             }
             break;
           }
           case "verify-ca": {
-            if (!config3.ssl.ca) {
+            if (!config4.ssl.ca) {
               throw new Error(
                 "SECURITY WARNING: Using sslmode=verify-ca requires specifying a CA with sslrootcert. If a public CA is used, verify-ca allows connections to a server that somebody else may have registered with the CA, making you vulnerable to Man-in-the-Middle attacks. Either specify a custom CA certificate with sslrootcert parameter or use sslmode=verify-full for proper security."
               );
             }
-            config3.ssl.checkServerIdentity = function() {
+            config4.ssl.checkServerIdentity = function() {
             };
             break;
           }
@@ -30376,27 +31195,27 @@ var require_pg_connection_string = __commonJS({
           }
         }
       } else {
-        switch (config3.sslmode) {
+        switch (config4.sslmode) {
           case "disable": {
-            config3.ssl = false;
+            config4.ssl = false;
             break;
           }
           case "prefer":
           case "require":
           case "verify-ca":
           case "verify-full": {
-            if (config3.sslmode !== "verify-full") {
-              deprecatedSslModeWarning(config3.sslmode);
+            if (config4.sslmode !== "verify-full") {
+              deprecatedSslModeWarning(config4.sslmode);
             }
             break;
           }
           case "no-verify": {
-            config3.ssl.rejectUnauthorized = false;
+            config4.ssl.rejectUnauthorized = false;
             break;
           }
         }
       }
-      return config3;
+      return config4;
     }
     function toConnectionOptions(sslConfig) {
       const connectionOptions = Object.entries(sslConfig).reduce((c, [key, value]) => {
@@ -30407,8 +31226,8 @@ var require_pg_connection_string = __commonJS({
       }, {});
       return connectionOptions;
     }
-    function toClientConfig(config3) {
-      const poolConfig = Object.entries(config3).reduce((c, [key, value]) => {
+    function toClientConfig(config4) {
+      const poolConfig = Object.entries(config4).reduce((c, [key, value]) => {
         if (key === "ssl") {
           const sslConfig = value;
           if (typeof sslConfig === "boolean") {
@@ -30464,9 +31283,9 @@ var require_connection_parameters = __commonJS({
     var dns = __require("dns");
     var defaults2 = require_defaults();
     var parse3 = require_pg_connection_string().parse;
-    var val = function(key, config3, envVar) {
-      if (config3[key]) {
-        return config3[key];
+    var val = function(key, config4, envVar) {
+      if (config4[key]) {
+        return config4[key];
       }
       if (envVar === void 0) {
         envVar = process.env["PG" + key.toUpperCase()];
@@ -30493,34 +31312,34 @@ var require_connection_parameters = __commonJS({
     var quoteParamValue = function(value) {
       return "'" + ("" + value).replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
     };
-    var add = function(params, config3, paramName) {
-      const value = config3[paramName];
+    var add = function(params, config4, paramName) {
+      const value = config4[paramName];
       if (value !== void 0 && value !== null) {
         params.push(paramName + "=" + quoteParamValue(value));
       }
     };
     var ConnectionParameters = class {
-      constructor(config3) {
-        config3 = typeof config3 === "string" ? parse3(config3) : config3 || {};
-        if (config3.connectionString) {
-          config3 = Object.assign({}, config3, parse3(config3.connectionString));
+      constructor(config4) {
+        config4 = typeof config4 === "string" ? parse3(config4) : config4 || {};
+        if (config4.connectionString) {
+          config4 = Object.assign({}, config4, parse3(config4.connectionString));
         }
-        this.user = val("user", config3);
-        this.database = val("database", config3);
+        this.user = val("user", config4);
+        this.database = val("database", config4);
         if (this.database === void 0) {
           this.database = this.user;
         }
-        this.port = parseInt(val("port", config3), 10);
-        this.host = val("host", config3);
+        this.port = parseInt(val("port", config4), 10);
+        this.host = val("host", config4);
         Object.defineProperty(this, "password", {
           configurable: true,
           enumerable: false,
           writable: true,
-          value: val("password", config3)
+          value: val("password", config4)
         });
-        this.binary = val("binary", config3);
-        this.options = val("options", config3);
-        this.ssl = typeof config3.ssl === "undefined" ? readSSLConfigFromEnvironment() : config3.ssl;
+        this.binary = val("binary", config4);
+        this.options = val("options", config4);
+        this.ssl = typeof config4.ssl === "undefined" ? readSSLConfigFromEnvironment() : config4.ssl;
         if (typeof this.ssl === "string") {
           if (this.ssl === "true") {
             this.ssl = true;
@@ -30534,27 +31353,27 @@ var require_connection_parameters = __commonJS({
             enumerable: false
           });
         }
-        this.client_encoding = val("client_encoding", config3);
-        this.replication = val("replication", config3);
+        this.client_encoding = val("client_encoding", config4);
+        this.replication = val("replication", config4);
         this.isDomainSocket = !(this.host || "").indexOf("/");
-        this.application_name = val("application_name", config3, "PGAPPNAME");
-        this.fallback_application_name = val("fallback_application_name", config3, false);
-        this.statement_timeout = val("statement_timeout", config3, false);
-        this.lock_timeout = val("lock_timeout", config3, false);
-        this.idle_in_transaction_session_timeout = val("idle_in_transaction_session_timeout", config3, false);
-        this.query_timeout = val("query_timeout", config3, false);
-        if (config3.connectionTimeoutMillis === void 0) {
+        this.application_name = val("application_name", config4, "PGAPPNAME");
+        this.fallback_application_name = val("fallback_application_name", config4, false);
+        this.statement_timeout = val("statement_timeout", config4, false);
+        this.lock_timeout = val("lock_timeout", config4, false);
+        this.idle_in_transaction_session_timeout = val("idle_in_transaction_session_timeout", config4, false);
+        this.query_timeout = val("query_timeout", config4, false);
+        if (config4.connectionTimeoutMillis === void 0) {
           this.connect_timeout = process.env.PGCONNECT_TIMEOUT || 0;
         } else {
-          this.connect_timeout = Math.floor(config3.connectionTimeoutMillis / 1e3);
+          this.connect_timeout = Math.floor(config4.connectionTimeoutMillis / 1e3);
         }
-        if (config3.keepAlive === false) {
+        if (config4.keepAlive === false) {
           this.keepalives = 0;
-        } else if (config3.keepAlive === true) {
+        } else if (config4.keepAlive === true) {
           this.keepalives = 1;
         }
-        if (typeof config3.keepAliveInitialDelayMillis === "number") {
-          this.keepalives_idle = Math.floor(config3.keepAliveInitialDelayMillis / 1e3);
+        if (typeof config4.keepAliveInitialDelayMillis === "number") {
+          this.keepalives_idle = Math.floor(config4.keepAliveInitialDelayMillis / 1e3);
         }
       }
       getLibpqConnectionString(cb) {
@@ -30697,21 +31516,21 @@ var require_query = __commonJS({
     var Result2 = require_result();
     var utils = require_utils4();
     var Query2 = class extends EventEmitter {
-      constructor(config3, values, callback) {
+      constructor(config4, values, callback) {
         super();
-        config3 = utils.normalizeQueryConfig(config3, values, callback);
-        this.text = config3.text;
-        this.values = config3.values;
-        this.rows = config3.rows;
-        this.types = config3.types;
-        this.name = config3.name;
-        this.queryMode = config3.queryMode;
-        this.binary = config3.binary;
-        this.portal = config3.portal || "";
-        this.callback = config3.callback;
-        this._rowMode = config3.rowMode;
-        if (process.domain && config3.callback) {
-          this.callback = process.domain.bind(config3.callback);
+        config4 = utils.normalizeQueryConfig(config4, values, callback);
+        this.text = config4.text;
+        this.values = config4.values;
+        this.rows = config4.rows;
+        this.types = config4.types;
+        this.name = config4.name;
+        this.queryMode = config4.queryMode;
+        this.binary = config4.binary;
+        this.portal = config4.portal || "";
+        this.callback = config4.callback;
+        this._rowMode = config4.rowMode;
+        if (process.domain && config4.callback) {
+          this.callback = process.domain.bind(config4.callback);
         }
         this._result = new Result2(this._rowMode, this.types);
         this._results = this._result;
@@ -31227,15 +32046,15 @@ var require_serializer = __commonJS({
         }
       }
     };
-    var bind = (config3 = {}) => {
-      const portal = config3.portal || "";
-      const statement = config3.statement || "";
-      const binary = config3.binary || false;
-      const values = config3.values || emptyArray;
+    var bind = (config4 = {}) => {
+      const portal = config4.portal || "";
+      const statement = config4.statement || "";
+      const binary = config4.binary || false;
+      const values = config4.values || emptyArray;
       const len = values.length;
       writer.addCString(portal).addCString(statement);
       writer.addInt16(len);
-      writeValues(values, config3.valueMapper);
+      writeValues(values, config4.valueMapper);
       writer.addInt16(len);
       writer.add(paramWriter.flush());
       writer.addInt16(1);
@@ -31249,12 +32068,12 @@ var require_serializer = __commonJS({
       );
     };
     var emptyExecute = Buffer.from([69, 0, 0, 0, 9, 0, 0, 0, 0, 0]);
-    var execute = (config3) => {
-      if (!config3 || !config3.portal && !config3.rows) {
+    var execute = (config4) => {
+      if (!config4 || !config4.portal && !config4.rows) {
         return emptyExecute;
       }
-      const portal = config3.portal || "";
-      const rows = config3.rows || 0;
+      const portal = config4.portal || "";
+      const rows = config4.rows || 0;
       const portalLength = Buffer.byteLength(portal);
       const len = 4 + portalLength + 1 + 4;
       const buff = Buffer.allocUnsafe(1 + len);
@@ -31733,7 +32552,7 @@ var require_dist2 = __commonJS({
     function parse3(stream, callback) {
       const parser = new parser_1.Parser();
       stream.on("data", (buffer) => parser.parse(buffer, callback));
-      return new Promise((resolve2) => stream.on("end", () => resolve2()));
+      return new Promise((resolve3) => stream.on("end", () => resolve3()));
     }
     exports.parse = parse3;
   }
@@ -31825,17 +32644,17 @@ var require_connection = __commonJS({
     var syncBuffer = serialize.sync();
     var endBuffer = serialize.end();
     var Connection2 = class extends EventEmitter {
-      constructor(config3) {
+      constructor(config4) {
         super();
-        config3 = config3 || {};
-        this.stream = config3.stream || getStream(config3.ssl);
+        config4 = config4 || {};
+        this.stream = config4.stream || getStream(config4.ssl);
         if (typeof this.stream === "function") {
-          this.stream = this.stream(config3);
+          this.stream = this.stream(config4);
         }
-        this._keepAlive = config3.keepAlive;
-        this._keepAliveInitialDelayMillis = config3.keepAliveInitialDelayMillis;
+        this._keepAlive = config4.keepAlive;
+        this._keepAliveInitialDelayMillis = config4.keepAliveInitialDelayMillis;
         this.parsedStatements = {};
-        this.ssl = config3.ssl || false;
+        this.ssl = config4.ssl || false;
         this._ending = false;
         this._emitMessage = false;
         const self = this;
@@ -31916,8 +32735,8 @@ var require_connection = __commonJS({
       requestSsl() {
         this.stream.write(serialize.requestSsl());
       }
-      startup(config3) {
-        this.stream.write(serialize.startup(config3));
+      startup(config4) {
+        this.stream.write(serialize.startup(config4));
       }
       cancel(processID, secretKey) {
         this._send(serialize.cancel(processID, secretKey));
@@ -31945,12 +32764,12 @@ var require_connection = __commonJS({
         this._send(serialize.parse(query));
       }
       // send bind message
-      bind(config3) {
-        this._send(serialize.bind(config3));
+      bind(config4) {
+        this._send(serialize.bind(config4));
       }
       // send execute message
-      execute(config3) {
-        this._send(serialize.execute(config3));
+      execute(config4) {
+        this._send(serialize.execute(config4));
       }
       flush() {
         if (this.stream.writable) {
@@ -32329,9 +33148,9 @@ var require_client = __commonJS({
       "Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead."
     );
     var Client2 = class extends EventEmitter {
-      constructor(config3) {
+      constructor(config4) {
         super();
-        this.connectionParameters = new ConnectionParameters(config3);
+        this.connectionParameters = new ConnectionParameters(config4);
         this.user = this.connectionParameters.user;
         this.database = this.connectionParameters.database;
         this.port = this.connectionParameters.port;
@@ -32343,7 +33162,7 @@ var require_client = __commonJS({
           value: this.connectionParameters.password
         });
         this.replication = this.connectionParameters.replication;
-        const c = config3 || {};
+        const c = config4 || {};
         if (c.Promise) {
           byoPromiseDeprecationNotice();
         }
@@ -32464,12 +33283,12 @@ var require_client = __commonJS({
           this._connect(callback);
           return;
         }
-        return new this._Promise((resolve2, reject) => {
+        return new this._Promise((resolve3, reject) => {
           this._connect((error40) => {
             if (error40) {
               reject(error40);
             } else {
-              resolve2(this);
+              resolve3(this);
             }
           });
         });
@@ -32793,17 +33612,17 @@ var require_client = __commonJS({
           }
         }
       }
-      query(config3, values, callback) {
+      query(config4, values, callback) {
         let query;
         let result;
         let readTimeout;
         let readTimeoutTimer;
         let queryCallback;
-        if (config3 === null || config3 === void 0) {
+        if (config4 === null || config4 === void 0) {
           throw new TypeError("Client was passed a null or undefined query");
-        } else if (typeof config3.submit === "function") {
-          readTimeout = config3.query_timeout || this.connectionParameters.query_timeout;
-          result = query = config3;
+        } else if (typeof config4.submit === "function") {
+          readTimeout = config4.query_timeout || this.connectionParameters.query_timeout;
+          result = query = config4;
           if (!query.callback) {
             if (typeof values === "function") {
               query.callback = values;
@@ -32812,11 +33631,11 @@ var require_client = __commonJS({
             }
           }
         } else {
-          readTimeout = config3.query_timeout || this.connectionParameters.query_timeout;
-          query = new Query2(config3, values, callback);
+          readTimeout = config4.query_timeout || this.connectionParameters.query_timeout;
+          query = new Query2(config4, values, callback);
           if (!query.callback) {
-            result = new this._Promise((resolve2, reject) => {
-              query.callback = (err, res) => err ? reject(err) : resolve2(res);
+            result = new this._Promise((resolve3, reject) => {
+              query.callback = (err, res) => err ? reject(err) : resolve3(res);
             }).catch((err) => {
               Error.captureStackTrace(err);
               throw err;
@@ -32893,8 +33712,8 @@ var require_client = __commonJS({
         if (cb) {
           this.connection.once("end", cb);
         } else {
-          return new this._Promise((resolve2) => {
-            this.connection.once("end", resolve2);
+          return new this._Promise((resolve3) => {
+            this.connection.once("end", resolve3);
           });
         }
       }
@@ -32943,8 +33762,8 @@ var require_pg_pool = __commonJS({
       const cb = function(err, client) {
         err ? rej(err) : res(client);
       };
-      const result = new Promise2(function(resolve2, reject) {
-        res = resolve2;
+      const result = new Promise2(function(resolve3, reject) {
+        res = resolve3;
         rej = reject;
       }).catch((err) => {
         Error.captureStackTrace(err);
@@ -33005,7 +33824,7 @@ var require_pg_pool = __commonJS({
         if (typeof Promise2.try === "function") {
           return Promise2.try(f);
         }
-        return new Promise2((resolve2) => resolve2(f()));
+        return new Promise2((resolve3) => resolve3(f()));
       }
       _isFull() {
         return this._clients.length >= this.options.max;
@@ -33341,16 +34160,16 @@ var require_query2 = __commonJS({
     var EventEmitter = __require("events").EventEmitter;
     var util2 = __require("util");
     var utils = require_utils4();
-    var NativeQuery = module.exports = function(config3, values, callback) {
+    var NativeQuery = module.exports = function(config4, values, callback) {
       EventEmitter.call(this);
-      config3 = utils.normalizeQueryConfig(config3, values, callback);
-      this.text = config3.text;
-      this.values = config3.values;
-      this.name = config3.name;
-      this.queryMode = config3.queryMode;
-      this.callback = config3.callback;
+      config4 = utils.normalizeQueryConfig(config4, values, callback);
+      this.text = config4.text;
+      this.values = config4.values;
+      this.name = config4.name;
+      this.queryMode = config4.queryMode;
+      this.callback = config4.callback;
       this.state = "new";
-      this._arrayMode = config3.rowMode === "array";
+      this._arrayMode = config4.rowMode === "array";
       this._emitRowEvents = false;
       this.on(
         "newListener",
@@ -33398,8 +34217,8 @@ var require_query2 = __commonJS({
     NativeQuery.prototype._getPromise = function() {
       if (this._promise) return this._promise;
       this._promise = new Promise(
-        function(resolve2, reject) {
-          this._once("end", resolve2);
+        function(resolve3, reject) {
+          this._once("end", resolve3);
           this._once("error", reject);
         }.bind(this)
       );
@@ -33495,11 +34314,11 @@ var require_client2 = __commonJS({
       },
       "Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead."
     );
-    var Client2 = module.exports = function(config3) {
+    var Client2 = module.exports = function(config4) {
       EventEmitter.call(this);
-      config3 = config3 || {};
-      this._Promise = config3.Promise || global.Promise;
-      this._types = new TypeOverrides2(config3.types);
+      config4 = config4 || {};
+      this._Promise = config4.Promise || global.Promise;
+      this._types = new TypeOverrides2(config4.types);
       this.native = new Native({
         types: this._types
       });
@@ -33508,8 +34327,8 @@ var require_client2 = __commonJS({
       this._connecting = false;
       this._connected = false;
       this._queryable = true;
-      const cp = this.connectionParameters = new ConnectionParameters(config3);
-      if (config3.nativeConnectionString) cp.nativeConnectionString = config3.nativeConnectionString;
+      const cp = this.connectionParameters = new ConnectionParameters(config4);
+      if (config4.nativeConnectionString) cp.nativeConnectionString = config4.nativeConnectionString;
       this.user = cp.user;
       Object.defineProperty(this, "password", {
         configurable: true,
@@ -33576,37 +34395,37 @@ var require_client2 = __commonJS({
         this._connect(callback);
         return;
       }
-      return new this._Promise((resolve2, reject) => {
+      return new this._Promise((resolve3, reject) => {
         this._connect((error40) => {
           if (error40) {
             reject(error40);
           } else {
-            resolve2(this);
+            resolve3(this);
           }
         });
       });
     };
-    Client2.prototype.query = function(config3, values, callback) {
+    Client2.prototype.query = function(config4, values, callback) {
       let query;
       let result;
       let readTimeout;
       let readTimeoutTimer;
       let queryCallback;
-      if (config3 === null || config3 === void 0) {
+      if (config4 === null || config4 === void 0) {
         throw new TypeError("Client was passed a null or undefined query");
-      } else if (typeof config3.submit === "function") {
-        readTimeout = config3.query_timeout || this.connectionParameters.query_timeout;
-        result = query = config3;
+      } else if (typeof config4.submit === "function") {
+        readTimeout = config4.query_timeout || this.connectionParameters.query_timeout;
+        result = query = config4;
         if (typeof values === "function") {
-          config3.callback = values;
+          config4.callback = values;
         }
       } else {
-        readTimeout = config3.query_timeout || this.connectionParameters.query_timeout;
-        query = new NativeQuery(config3, values, callback);
+        readTimeout = config4.query_timeout || this.connectionParameters.query_timeout;
+        query = new NativeQuery(config4, values, callback);
         if (!query.callback) {
           let resolveOut, rejectOut;
-          result = new this._Promise((resolve2, reject) => {
-            resolveOut = resolve2;
+          result = new this._Promise((resolve3, reject) => {
+            resolveOut = resolve3;
             rejectOut = reject;
           }).catch((err) => {
             Error.captureStackTrace(err);
@@ -33666,8 +34485,8 @@ var require_client2 = __commonJS({
       }
       let result;
       if (!cb) {
-        result = new this._Promise(function(resolve2, reject) {
-          cb = (err) => err ? reject(err) : resolve2();
+        result = new this._Promise(function(resolve3, reject) {
+          cb = (err) => err ? reject(err) : resolve3();
         });
       }
       this.native.end(function() {
@@ -33801,6 +34620,11 @@ var require_lib5 = __commonJS({
     });
   }
 });
+
+// src/serverless.ts
+var dotenv2 = __toESM(require_main(), 1);
+var import_serverless_http = __toESM(require_serverless_http(), 1);
+import { resolve as resolve2 } from "path";
 
 // src/app.ts
 var import_express6 = __toESM(require_express2(), 1);
@@ -38009,8 +38833,8 @@ var ConsoleLogWriter = class {
 var DefaultLogger = class {
   static [entityKind] = "DefaultLogger";
   writer;
-  constructor(config3) {
-    this.writer = config3?.writer ?? new ConsoleLogWriter();
+  constructor(config4) {
+    this.writer = config4?.writer ?? new ConsoleLogWriter();
   }
   logQuery(query, params) {
     const stringifiedParams = params.map((p) => {
@@ -38056,24 +38880,24 @@ var QueryPromise = class {
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/column.js
 var Column = class {
-  constructor(table, config3) {
+  constructor(table, config4) {
     this.table = table;
-    this.config = config3;
-    this.name = config3.name;
-    this.keyAsName = config3.keyAsName;
-    this.notNull = config3.notNull;
-    this.default = config3.default;
-    this.defaultFn = config3.defaultFn;
-    this.onUpdateFn = config3.onUpdateFn;
-    this.hasDefault = config3.hasDefault;
-    this.primary = config3.primaryKey;
-    this.isUnique = config3.isUnique;
-    this.uniqueName = config3.uniqueName;
-    this.uniqueType = config3.uniqueType;
-    this.dataType = config3.dataType;
-    this.columnType = config3.columnType;
-    this.generated = config3.generated;
-    this.generatedIdentity = config3.generatedIdentity;
+    this.config = config4;
+    this.name = config4.name;
+    this.keyAsName = config4.keyAsName;
+    this.notNull = config4.notNull;
+    this.default = config4.default;
+    this.defaultFn = config4.defaultFn;
+    this.onUpdateFn = config4.onUpdateFn;
+    this.hasDefault = config4.hasDefault;
+    this.primary = config4.primaryKey;
+    this.isUnique = config4.isUnique;
+    this.uniqueName = config4.uniqueName;
+    this.uniqueType = config4.uniqueType;
+    this.dataType = config4.dataType;
+    this.columnType = config4.columnType;
+    this.generated = config4.generated;
+    this.generatedIdentity = config4.generatedIdentity;
   }
   static [entityKind] = "Column";
   name;
@@ -38220,9 +39044,9 @@ var ForeignKeyBuilder = class {
   _onUpdate = "no action";
   /** @internal */
   _onDelete = "no action";
-  constructor(config3, actions) {
+  constructor(config4, actions) {
     this.reference = () => {
-      const { name, columns, foreignColumns } = config3();
+      const { name, columns, foreignColumns } = config4();
       return { name, columns, foreignTable: foreignColumns[0].table, foreignColumns };
     };
     if (actions) {
@@ -38410,10 +39234,10 @@ var PgColumnBuilder = class extends ColumnBuilder {
     this.foreignKeyConfigs.push({ ref, actions });
     return this;
   }
-  unique(name, config3) {
+  unique(name, config4) {
     this.config.isUnique = true;
     this.config.uniqueName = name;
-    this.config.uniqueType = config3?.nulls;
+    this.config.uniqueType = config4?.nulls;
     return this;
   }
   generatedAlwaysAs(as) {
@@ -38452,11 +39276,11 @@ var PgColumnBuilder = class extends ColumnBuilder {
   }
 };
 var PgColumn = class extends Column {
-  constructor(table, config3) {
-    if (!config3.uniqueName) {
-      config3.uniqueName = uniqueKeyName(table, [config3.name]);
+  constructor(table, config4) {
+    if (!config4.uniqueName) {
+      config4.uniqueName = uniqueKeyName(table, [config4.name]);
     }
-    super(table, config3);
+    super(table, config4);
     this.table = table;
   }
   static [entityKind] = "PgColumn";
@@ -38557,11 +39381,11 @@ var PgArrayBuilder = class extends PgColumnBuilder {
   }
 };
 var PgArray = class _PgArray extends PgColumn {
-  constructor(table, config3, baseColumn, range) {
-    super(table, config3);
+  constructor(table, config4, baseColumn, range) {
+    super(table, config4);
     this.baseColumn = baseColumn;
     this.range = range;
-    this.size = config3.size;
+    this.size = config4.size;
   }
   size;
   static [entityKind] = "PgArray";
@@ -38602,9 +39426,9 @@ var PgEnumObjectColumn = class extends PgColumn {
   static [entityKind] = "PgEnumObjectColumn";
   enum;
   enumValues = this.config.enum.enumValues;
-  constructor(table, config3) {
-    super(table, config3);
-    this.enum = config3.enum;
+  constructor(table, config4) {
+    super(table, config4);
+    this.enum = config4.enum;
   }
   getSQLType() {
     return this.enum.enumName;
@@ -38632,9 +39456,9 @@ var PgEnumColumn = class extends PgColumn {
   static [entityKind] = "PgEnumColumn";
   enum = this.config.enum;
   enumValues = this.config.enum.enumValues;
-  constructor(table, config3) {
-    super(table, config3);
-    this.enum = config3.enum;
+  constructor(table, config4) {
+    super(table, config4);
+    this.enum = config4.enum;
   }
   getSQLType() {
     return this.enum.enumName;
@@ -38821,9 +39645,9 @@ var SQL = class _SQL {
     this.queryChunks.push(...query.queryChunks);
     return this;
   }
-  toQuery(config3) {
+  toQuery(config4) {
     return tracer.startActiveSpan("drizzle.buildSQL", (span) => {
-      const query = this.buildQueryFromSourceParams(this.queryChunks, config3);
+      const query = this.buildQueryFromSourceParams(this.queryChunks, config4);
       span?.setAttributes({
         "drizzle.query.text": query.sql,
         "drizzle.query.params": JSON.stringify(query.params)
@@ -38832,7 +39656,7 @@ var SQL = class _SQL {
     });
   }
   buildQueryFromSourceParams(chunks, _config) {
-    const config3 = Object.assign({}, _config, {
+    const config4 = Object.assign({}, _config, {
       inlineParams: _config.inlineParams || this.shouldInlineParams,
       paramStartIndex: _config.paramStartIndex || { value: 0 }
     });
@@ -38843,7 +39667,7 @@ var SQL = class _SQL {
       prepareTyping,
       inlineParams,
       paramStartIndex
-    } = config3;
+    } = config4;
     return mergeQueries(chunks.map((chunk) => {
       if (is(chunk, StringChunk)) {
         return { sql: chunk.value.join(""), params: [] };
@@ -38863,11 +39687,11 @@ var SQL = class _SQL {
           }
         }
         result.push(new StringChunk(")"));
-        return this.buildQueryFromSourceParams(result, config3);
+        return this.buildQueryFromSourceParams(result, config4);
       }
       if (is(chunk, _SQL)) {
         return this.buildQueryFromSourceParams(chunk.queryChunks, {
-          ...config3,
+          ...config4,
           inlineParams: inlineParams || chunk.shouldInlineParams
         });
       }
@@ -38904,10 +39728,10 @@ var SQL = class _SQL {
         }
         const mappedValue = chunk.value === null ? null : chunk.encoder.mapToDriverValue(chunk.value);
         if (is(mappedValue, _SQL)) {
-          return this.buildQueryFromSourceParams([mappedValue], config3);
+          return this.buildQueryFromSourceParams([mappedValue], config4);
         }
         if (inlineParams) {
-          return { sql: this.mapInlineParam(mappedValue, config3), params: [] };
+          return { sql: this.mapInlineParam(mappedValue, config4), params: [] };
         }
         let typings = ["none"];
         if (prepareTyping) {
@@ -38930,7 +39754,7 @@ var SQL = class _SQL {
           chunk._.sql,
           new StringChunk(") "),
           new Name(chunk._.alias)
-        ], config3);
+        ], config4);
       }
       if (isPgEnum(chunk)) {
         if (chunk.schema) {
@@ -38940,16 +39764,16 @@ var SQL = class _SQL {
       }
       if (isSQLWrapper(chunk)) {
         if (chunk.shouldOmitSQLParens?.()) {
-          return this.buildQueryFromSourceParams([chunk.getSQL()], config3);
+          return this.buildQueryFromSourceParams([chunk.getSQL()], config4);
         }
         return this.buildQueryFromSourceParams([
           new StringChunk("("),
           chunk.getSQL(),
           new StringChunk(")")
-        ], config3);
+        ], config4);
       }
       if (inlineParams) {
-        return { sql: this.mapInlineParam(chunk, config3), params: [] };
+        return { sql: this.mapInlineParam(chunk, config4), params: [] };
       }
       return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
     }));
@@ -39265,8 +40089,8 @@ function mapColumnsInSQLToAlias(query, alias) {
 var SelectionProxyHandler = class _SelectionProxyHandler {
   static [entityKind] = "SelectionProxyHandler";
   config;
-  constructor(config3) {
-    this.config = { ...config3 };
+  constructor(config4) {
+    this.config = { ...config4 };
   }
   get(subquery, prop) {
     if (prop === "_") {
@@ -39569,8 +40393,8 @@ var PgBigInt64 = class extends PgColumn {
   }
 };
 function bigint(a, b) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  if (config3.mode === "number") {
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  if (config4.mode === "number") {
     return new PgBigInt53Builder(name);
   }
   return new PgBigInt64Builder(name);
@@ -39629,8 +40453,8 @@ var PgBigSerial64 = class extends PgColumn {
   }
 };
 function bigserial(a, b) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  if (config3.mode === "number") {
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  if (config4.mode === "number") {
     return new PgBigSerial53Builder(name);
   }
   return new PgBigSerial64Builder(name);
@@ -39660,10 +40484,10 @@ function boolean(name) {
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/char.js
 var PgCharBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCharBuilder";
-  constructor(name, config3) {
+  constructor(name, config4) {
     super(name, "string", "PgChar");
-    this.config.length = config3.length;
-    this.config.enumValues = config3.enum;
+    this.config.length = config4.length;
+    this.config.enumValues = config4.enum;
   }
   /** @internal */
   build(table) {
@@ -39682,8 +40506,8 @@ var PgChar = class extends PgColumn {
   }
 };
 function char(a, b = {}) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  return new PgCharBuilder(name, config3);
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  return new PgCharBuilder(name, config4);
 }
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/cidr.js
@@ -39728,11 +40552,11 @@ var PgCustomColumn = class extends PgColumn {
   sqlName;
   mapTo;
   mapFrom;
-  constructor(table, config3) {
-    super(table, config3);
-    this.sqlName = config3.customTypeParams.dataType(config3.fieldConfig);
-    this.mapTo = config3.customTypeParams.toDriver;
-    this.mapFrom = config3.customTypeParams.fromDriver;
+  constructor(table, config4) {
+    super(table, config4);
+    this.sqlName = config4.customTypeParams.dataType(config4.fieldConfig);
+    this.mapTo = config4.customTypeParams.toDriver;
+    this.mapFrom = config4.customTypeParams.fromDriver;
   }
   getSQLType() {
     return this.sqlName;
@@ -39746,8 +40570,8 @@ var PgCustomColumn = class extends PgColumn {
 };
 function customType(customTypeParams) {
   return (a, b) => {
-    const { name, config: config3 } = getColumnNameAndConfig(a, b);
-    return new PgCustomColumnBuilder(name, config3, customTypeParams);
+    const { name, config: config4 } = getColumnNameAndConfig(a, b);
+    return new PgCustomColumnBuilder(name, config4, customTypeParams);
   };
 }
 
@@ -39807,8 +40631,8 @@ var PgDateString = class extends PgColumn {
   }
 };
 function date(a, b) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  if (config3?.mode === "date") {
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  if (config4?.mode === "date") {
     return new PgDateBuilder(name);
   }
   return new PgDateStringBuilder(name);
@@ -39915,8 +40739,8 @@ var PgInterval = class extends PgColumn {
   }
 };
 function interval(a, b = {}) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  return new PgIntervalBuilder(name, config3);
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  return new PgIntervalBuilder(name, config4);
 }
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/json.js
@@ -39932,8 +40756,8 @@ var PgJsonBuilder = class extends PgColumnBuilder {
 };
 var PgJson = class extends PgColumn {
   static [entityKind] = "PgJson";
-  constructor(table, config3) {
-    super(table, config3);
+  constructor(table, config4) {
+    super(table, config4);
   }
   getSQLType() {
     return "json";
@@ -39969,8 +40793,8 @@ var PgJsonbBuilder = class extends PgColumnBuilder {
 };
 var PgJsonb = class extends PgColumn {
   static [entityKind] = "PgJsonb";
-  constructor(table, config3) {
-    super(table, config3);
+  constructor(table, config4) {
+    super(table, config4);
   }
   getSQLType() {
     return "jsonb";
@@ -40047,8 +40871,8 @@ var PgLineABC = class extends PgColumn {
   }
 };
 function line(a, b) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  if (!config3?.mode || config3.mode === "tuple") {
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  if (!config4?.mode || config4.mode === "tuple") {
     return new PgLineBuilder(name);
   }
   return new PgLineABCBuilder(name);
@@ -40113,10 +40937,10 @@ var PgNumeric = class extends PgColumn {
   static [entityKind] = "PgNumeric";
   precision;
   scale;
-  constructor(table, config3) {
-    super(table, config3);
-    this.precision = config3.precision;
-    this.scale = config3.scale;
+  constructor(table, config4) {
+    super(table, config4);
+    this.precision = config4.precision;
+    this.scale = config4.scale;
   }
   mapFromDriverValue(value) {
     if (typeof value === "string") return value;
@@ -40151,10 +40975,10 @@ var PgNumericNumber = class extends PgColumn {
   static [entityKind] = "PgNumericNumber";
   precision;
   scale;
-  constructor(table, config3) {
-    super(table, config3);
-    this.precision = config3.precision;
-    this.scale = config3.scale;
+  constructor(table, config4) {
+    super(table, config4);
+    this.precision = config4.precision;
+    this.scale = config4.scale;
   }
   mapFromDriverValue(value) {
     if (typeof value === "number") return value;
@@ -40190,10 +41014,10 @@ var PgNumericBigInt = class extends PgColumn {
   static [entityKind] = "PgNumericBigInt";
   precision;
   scale;
-  constructor(table, config3) {
-    super(table, config3);
-    this.precision = config3.precision;
-    this.scale = config3.scale;
+  constructor(table, config4) {
+    super(table, config4);
+    this.precision = config4.precision;
+    this.scale = config4.scale;
   }
   mapFromDriverValue = BigInt;
   mapToDriverValue = String;
@@ -40208,9 +41032,9 @@ var PgNumericBigInt = class extends PgColumn {
   }
 };
 function numeric(a, b) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  const mode = config3?.mode;
-  return mode === "number" ? new PgNumericNumberBuilder(name, config3?.precision, config3?.scale) : mode === "bigint" ? new PgNumericBigIntBuilder(name, config3?.precision, config3?.scale) : new PgNumericBuilder(name, config3?.precision, config3?.scale);
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  const mode = config4?.mode;
+  return mode === "number" ? new PgNumericNumberBuilder(name, config4?.precision, config4?.scale) : mode === "bigint" ? new PgNumericBigIntBuilder(name, config4?.precision, config4?.scale) : new PgNumericBuilder(name, config4?.precision, config4?.scale);
 }
 var decimal = numeric;
 
@@ -40274,8 +41098,8 @@ var PgPointObject = class extends PgColumn {
   }
 };
 function point(a, b) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  if (!config3?.mode || config3.mode === "tuple") {
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  if (!config4?.mode || config4.mode === "tuple") {
     return new PgPointTupleBuilder(name);
   }
   return new PgPointObjectBuilder(name);
@@ -40373,8 +41197,8 @@ var PgGeometryObject = class extends PgColumn {
   }
 };
 function geometry(a, b) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  if (!config3?.mode || config3.mode === "tuple") {
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  if (!config4?.mode || config4.mode === "tuple") {
     return new PgGeometryBuilder(name);
   }
   return new PgGeometryObjectBuilder(name);
@@ -40394,8 +41218,8 @@ var PgRealBuilder = class extends PgColumnBuilder {
 };
 var PgReal = class extends PgColumn {
   static [entityKind] = "PgReal";
-  constructor(table, config3) {
-    super(table, config3);
+  constructor(table, config4) {
+    super(table, config4);
   }
   getSQLType() {
     return "real";
@@ -40490,9 +41314,9 @@ function smallserial(name) {
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/text.js
 var PgTextBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgTextBuilder";
-  constructor(name, config3) {
+  constructor(name, config4) {
     super(name, "string", "PgText");
-    this.config.enumValues = config3.enum;
+    this.config.enumValues = config4.enum;
   }
   /** @internal */
   build(table) {
@@ -40507,8 +41331,8 @@ var PgText = class extends PgColumn {
   }
 };
 function text(a, b = {}) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  return new PgTextBuilder(name, config3);
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  return new PgTextBuilder(name, config4);
 }
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/time.js
@@ -40530,10 +41354,10 @@ var PgTime = class extends PgColumn {
   static [entityKind] = "PgTime";
   withTimezone;
   precision;
-  constructor(table, config3) {
-    super(table, config3);
-    this.withTimezone = config3.withTimezone;
-    this.precision = config3.precision;
+  constructor(table, config4) {
+    super(table, config4);
+    this.withTimezone = config4.withTimezone;
+    this.precision = config4.precision;
   }
   getSQLType() {
     const precision = this.precision === void 0 ? "" : `(${this.precision})`;
@@ -40541,8 +41365,8 @@ var PgTime = class extends PgColumn {
   }
 };
 function time(a, b = {}) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  return new PgTimeBuilder(name, config3.withTimezone ?? false, config3.precision);
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  return new PgTimeBuilder(name, config4.withTimezone ?? false, config4.precision);
 }
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/timestamp.js
@@ -40562,10 +41386,10 @@ var PgTimestamp = class extends PgColumn {
   static [entityKind] = "PgTimestamp";
   withTimezone;
   precision;
-  constructor(table, config3) {
-    super(table, config3);
-    this.withTimezone = config3.withTimezone;
-    this.precision = config3.precision;
+  constructor(table, config4) {
+    super(table, config4);
+    this.withTimezone = config4.withTimezone;
+    this.precision = config4.precision;
   }
   getSQLType() {
     const precision = this.precision === void 0 ? "" : ` (${this.precision})`;
@@ -40598,10 +41422,10 @@ var PgTimestampString = class extends PgColumn {
   static [entityKind] = "PgTimestampString";
   withTimezone;
   precision;
-  constructor(table, config3) {
-    super(table, config3);
-    this.withTimezone = config3.withTimezone;
-    this.precision = config3.precision;
+  constructor(table, config4) {
+    super(table, config4);
+    this.withTimezone = config4.withTimezone;
+    this.precision = config4.precision;
   }
   getSQLType() {
     const precision = this.precision === void 0 ? "" : `(${this.precision})`;
@@ -40619,11 +41443,11 @@ var PgTimestampString = class extends PgColumn {
   }
 };
 function timestamp(a, b = {}) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  if (config3?.mode === "string") {
-    return new PgTimestampStringBuilder(name, config3.withTimezone ?? false, config3.precision);
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  if (config4?.mode === "string") {
+    return new PgTimestampStringBuilder(name, config4.withTimezone ?? false, config4.precision);
   }
-  return new PgTimestampBuilder(name, config3?.withTimezone ?? false, config3?.precision);
+  return new PgTimestampBuilder(name, config4?.withTimezone ?? false, config4?.precision);
 }
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/uuid.js
@@ -40656,10 +41480,10 @@ function uuid(name) {
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/varchar.js
 var PgVarcharBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgVarcharBuilder";
-  constructor(name, config3) {
+  constructor(name, config4) {
     super(name, "string", "PgVarchar");
-    this.config.length = config3.length;
-    this.config.enumValues = config3.enum;
+    this.config.length = config4.length;
+    this.config.enumValues = config4.enum;
   }
   /** @internal */
   build(table) {
@@ -40678,16 +41502,16 @@ var PgVarchar = class extends PgColumn {
   }
 };
 function varchar(a, b = {}) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  return new PgVarcharBuilder(name, config3);
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  return new PgVarcharBuilder(name, config4);
 }
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
 var PgBinaryVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgBinaryVectorBuilder";
-  constructor(name, config3) {
+  constructor(name, config4) {
     super(name, "string", "PgBinaryVector");
-    this.config.dimensions = config3.dimensions;
+    this.config.dimensions = config4.dimensions;
   }
   /** @internal */
   build(table) {
@@ -40705,16 +41529,16 @@ var PgBinaryVector = class extends PgColumn {
   }
 };
 function bit(a, b) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  return new PgBinaryVectorBuilder(name, config3);
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  return new PgBinaryVectorBuilder(name, config4);
 }
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
 var PgHalfVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgHalfVectorBuilder";
-  constructor(name, config3) {
+  constructor(name, config4) {
     super(name, "array", "PgHalfVector");
-    this.config.dimensions = config3.dimensions;
+    this.config.dimensions = config4.dimensions;
   }
   /** @internal */
   build(table) {
@@ -40738,16 +41562,16 @@ var PgHalfVector = class extends PgColumn {
   }
 };
 function halfvec(a, b) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  return new PgHalfVectorBuilder(name, config3);
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  return new PgHalfVectorBuilder(name, config4);
 }
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
 var PgSparseVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSparseVectorBuilder";
-  constructor(name, config3) {
+  constructor(name, config4) {
     super(name, "string", "PgSparseVector");
-    this.config.dimensions = config3.dimensions;
+    this.config.dimensions = config4.dimensions;
   }
   /** @internal */
   build(table) {
@@ -40765,16 +41589,16 @@ var PgSparseVector = class extends PgColumn {
   }
 };
 function sparsevec(a, b) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  return new PgSparseVectorBuilder(name, config3);
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  return new PgSparseVectorBuilder(name, config4);
 }
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
 var PgVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgVectorBuilder";
-  constructor(name, config3) {
+  constructor(name, config4) {
     super(name, "array", "PgVector");
-    this.config.dimensions = config3.dimensions;
+    this.config.dimensions = config4.dimensions;
   }
   /** @internal */
   build(table) {
@@ -40798,8 +41622,8 @@ var PgVector = class extends PgColumn {
   }
 };
 function vector(a, b) {
-  const { name, config: config3 } = getColumnNameAndConfig(a, b);
-  return new PgVectorBuilder(name, config3);
+  const { name, config: config4 } = getColumnNameAndConfig(a, b);
+  return new PgVectorBuilder(name, config4);
 }
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/columns/all.js
@@ -41141,16 +41965,16 @@ var Relation = class {
   fieldName;
 };
 var Relations = class {
-  constructor(table, config3) {
+  constructor(table, config4) {
     this.table = table;
-    this.config = config3;
+    this.config = config4;
   }
   static [entityKind] = "Relations";
 };
 var One = class _One extends Relation {
-  constructor(sourceTable, referencedTable, config3, isNullable) {
-    super(sourceTable, referencedTable, config3?.relationName);
-    this.config = config3;
+  constructor(sourceTable, referencedTable, config4, isNullable) {
+    super(sourceTable, referencedTable, config4?.relationName);
+    this.config = config4;
     this.isNullable = isNullable;
   }
   static [entityKind] = "One";
@@ -41166,9 +41990,9 @@ var One = class _One extends Relation {
   }
 };
 var Many = class _Many extends Relation {
-  constructor(sourceTable, referencedTable, config3) {
-    super(sourceTable, referencedTable, config3?.relationName);
-    this.config = config3;
+  constructor(sourceTable, referencedTable, config4) {
+    super(sourceTable, referencedTable, config4?.relationName);
+    this.config = config4;
   }
   static [entityKind] = "Many";
   withFieldName(fieldName) {
@@ -41278,18 +42102,18 @@ function extractTablesRelationalConfig(schema, configHelpers) {
   return { tables: tablesConfig, tableNamesMap };
 }
 function createOne(sourceTable) {
-  return function one(table, config3) {
+  return function one(table, config4) {
     return new One(
       sourceTable,
       table,
-      config3,
-      config3?.fields.reduce((res, f) => res && f.notNull, true) ?? false
+      config4,
+      config4?.fields.reduce((res, f) => res && f.notNull, true) ?? false
     );
   };
 }
 function createMany(sourceTable) {
-  return function many(referencedTable, config3) {
-    return new Many(sourceTable, referencedTable, config3);
+  return function many(referencedTable, config4) {
+    return new Many(sourceTable, referencedTable, config4);
   };
 }
 function normalizeRelation(schema, tableNamesMap, relation) {
@@ -41399,12 +42223,12 @@ var PgDialect = class {
   static [entityKind] = "PgDialect";
   /** @internal */
   casing;
-  constructor(config3) {
-    this.casing = new CasingCache(config3?.casing);
+  constructor(config4) {
+    this.casing = new CasingCache(config4?.casing);
   }
-  async migrate(migrations, session, config3) {
-    const migrationsTable = typeof config3 === "string" ? "__drizzle_migrations" : config3.migrationsTable ?? "__drizzle_migrations";
-    const migrationsSchema = typeof config3 === "string" ? "drizzle" : config3.migrationsSchema ?? "drizzle";
+  async migrate(migrations, session, config4) {
+    const migrationsTable = typeof config4 === "string" ? "__drizzle_migrations" : config4.migrationsTable ?? "__drizzle_migrations";
+    const migrationsSchema = typeof config4 === "string" ? "drizzle" : config4.migrationsSchema ?? "drizzle";
     const migrationTableCreate = sql`
 			CREATE TABLE IF NOT EXISTS ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)} (
 				id SERIAL PRIMARY KEY,
@@ -42283,7 +43107,7 @@ var PgDialect = class {
     tableNamesMap,
     table,
     tableConfig,
-    queryConfig: config3,
+    queryConfig: config4,
     tableAlias,
     nestedQueryRelation,
     joinOn
@@ -42291,7 +43115,7 @@ var PgDialect = class {
     let selection = [];
     let limit, offset, orderBy = [], where;
     const joins = [];
-    if (config3 === true) {
+    if (config4 === true) {
       const selectionEntries = Object.entries(tableConfig.columns);
       selection = selectionEntries.map(([key, value]) => ({
         dbKey: value.name,
@@ -42305,15 +43129,15 @@ var PgDialect = class {
       const aliasedColumns = Object.fromEntries(
         Object.entries(tableConfig.columns).map(([key, value]) => [key, aliasedTableColumn(value, tableAlias)])
       );
-      if (config3.where) {
-        const whereSql = typeof config3.where === "function" ? config3.where(aliasedColumns, getOperators()) : config3.where;
+      if (config4.where) {
+        const whereSql = typeof config4.where === "function" ? config4.where(aliasedColumns, getOperators()) : config4.where;
         where = whereSql && mapColumnsInSQLToAlias(whereSql, tableAlias);
       }
       const fieldsSelection = [];
       let selectedColumns = [];
-      if (config3.columns) {
+      if (config4.columns) {
         let isIncludeMode = false;
-        for (const [field, value] of Object.entries(config3.columns)) {
+        for (const [field, value] of Object.entries(config4.columns)) {
           if (value === void 0) {
             continue;
           }
@@ -42325,7 +43149,7 @@ var PgDialect = class {
           }
         }
         if (selectedColumns.length > 0) {
-          selectedColumns = isIncludeMode ? selectedColumns.filter((c) => config3.columns?.[c] === true) : Object.keys(tableConfig.columns).filter((key) => !selectedColumns.includes(key));
+          selectedColumns = isIncludeMode ? selectedColumns.filter((c) => config4.columns?.[c] === true) : Object.keys(tableConfig.columns).filter((key) => !selectedColumns.includes(key));
         }
       } else {
         selectedColumns = Object.keys(tableConfig.columns);
@@ -42335,12 +43159,12 @@ var PgDialect = class {
         fieldsSelection.push({ tsKey: field, value: column });
       }
       let selectedRelations = [];
-      if (config3.with) {
-        selectedRelations = Object.entries(config3.with).filter((entry) => !!entry[1]).map(([tsKey, queryConfig]) => ({ tsKey, queryConfig, relation: tableConfig.relations[tsKey] }));
+      if (config4.with) {
+        selectedRelations = Object.entries(config4.with).filter((entry) => !!entry[1]).map(([tsKey, queryConfig]) => ({ tsKey, queryConfig, relation: tableConfig.relations[tsKey] }));
       }
       let extras;
-      if (config3.extras) {
-        extras = typeof config3.extras === "function" ? config3.extras(aliasedColumns, { sql }) : config3.extras;
+      if (config4.extras) {
+        extras = typeof config4.extras === "function" ? config4.extras(aliasedColumns, { sql }) : config4.extras;
         for (const [tsKey, value] of Object.entries(extras)) {
           fieldsSelection.push({
             tsKey,
@@ -42358,7 +43182,7 @@ var PgDialect = class {
           selection: []
         });
       }
-      let orderByOrig = typeof config3.orderBy === "function" ? config3.orderBy(aliasedColumns, getOrderByOperators()) : config3.orderBy ?? [];
+      let orderByOrig = typeof config4.orderBy === "function" ? config4.orderBy(aliasedColumns, getOrderByOperators()) : config4.orderBy ?? [];
       if (!Array.isArray(orderByOrig)) {
         orderByOrig = [orderByOrig];
       }
@@ -42368,8 +43192,8 @@ var PgDialect = class {
         }
         return mapColumnsInSQLToAlias(orderByValue, tableAlias);
       });
-      limit = config3.limit;
-      offset = config3.offset;
+      limit = config4.limit;
+      offset = config4.offset;
       for (const {
         tsKey: selectedRelationTsKey,
         queryConfig: selectedRelationConfigValue,
@@ -42516,14 +43340,14 @@ var PgSelectBuilder = class {
   dialect;
   withList = [];
   distinct;
-  constructor(config3) {
-    this.fields = config3.fields;
-    this.session = config3.session;
-    this.dialect = config3.dialect;
-    if (config3.withList) {
-      this.withList = config3.withList;
+  constructor(config4) {
+    this.fields = config4.fields;
+    this.session = config4.session;
+    this.dialect = config4.dialect;
+    if (config4.withList) {
+      this.withList = config4.withList;
     }
-    this.distinct = config3.distinct;
+    this.distinct = config4.distinct;
   }
   authToken;
   /** @internal */
@@ -43212,8 +44036,8 @@ var PgSelectQueryBuilderBase = class extends TypedQueryBuilder {
    * @param strength the lock strength.
    * @param config the lock configuration.
    */
-  for(strength, config3 = {}) {
-    this.config.lockingClause = { strength, config: config3 };
+  for(strength, config4 = {}) {
+    this.config.lockingClause = { strength, config: config4 };
     return this;
   }
   /** @internal */
@@ -43245,8 +44069,8 @@ var PgSelectQueryBuilderBase = class extends TypedQueryBuilder {
   $dynamic() {
     return this;
   }
-  $withCache(config3) {
-    this.cacheConfig = config3 === void 0 ? { config: {}, enable: true, autoInvalidate: true } : config3 === false ? { enable: false } : { enable: true, autoInvalidate: true, ...config3 };
+  $withCache(config4) {
+    this.cacheConfig = config4 === void 0 ? { config: {}, enable: true, autoInvalidate: true } : config4 === false ? { enable: false } : { enable: true, autoInvalidate: true, ...config4 };
     return this;
   }
 };
@@ -43254,11 +44078,11 @@ var PgSelectBase = class extends PgSelectQueryBuilderBase {
   static [entityKind] = "PgSelect";
   /** @internal */
   _prepare(name) {
-    const { session, config: config3, dialect, joinsNotNullableMap, authToken, cacheConfig, usedTables } = this;
+    const { session, config: config4, dialect, joinsNotNullableMap, authToken, cacheConfig, usedTables } = this;
     if (!session) {
       throw new Error("Cannot execute a query on a query builder. Please use a database instance instead.");
     }
-    const { fields } = config3;
+    const { fields } = config4;
     return tracer.startActiveSpan("drizzle.prepareQuery", () => {
       const fieldsList = orderSelectedFields(fields);
       const query = session.prepareQuery(dialect.sqlToQuery(this.getSQL()), fieldsList, name, true, void 0, {
@@ -43612,13 +44436,13 @@ var PgInsertBase = class extends QueryPromise {
    *   .onConflictDoNothing({ target: cars.id });
    * ```
    */
-  onConflictDoNothing(config3 = {}) {
-    if (config3.target === void 0) {
+  onConflictDoNothing(config4 = {}) {
+    if (config4.target === void 0) {
       this.config.onConflict = sql`do nothing`;
     } else {
       let targetColumn = "";
-      targetColumn = Array.isArray(config3.target) ? config3.target.map((it) => this.dialect.escapeName(this.dialect.casing.getColumnCasing(it))).join(",") : this.dialect.escapeName(this.dialect.casing.getColumnCasing(config3.target));
-      const whereSql = config3.where ? sql` where ${config3.where}` : void 0;
+      targetColumn = Array.isArray(config4.target) ? config4.target.map((it) => this.dialect.escapeName(this.dialect.casing.getColumnCasing(it))).join(",") : this.dialect.escapeName(this.dialect.casing.getColumnCasing(config4.target));
+      const whereSql = config4.where ? sql` where ${config4.where}` : void 0;
       this.config.onConflict = sql`(${sql.raw(targetColumn)})${whereSql} do nothing`;
     }
     return this;
@@ -43652,18 +44476,18 @@ var PgInsertBase = class extends QueryPromise {
    *   });
    * ```
    */
-  onConflictDoUpdate(config3) {
-    if (config3.where && (config3.targetWhere || config3.setWhere)) {
+  onConflictDoUpdate(config4) {
+    if (config4.where && (config4.targetWhere || config4.setWhere)) {
       throw new Error(
         'You cannot use both "where" and "targetWhere"/"setWhere" at the same time - "where" is deprecated, use "targetWhere" or "setWhere" instead.'
       );
     }
-    const whereSql = config3.where ? sql` where ${config3.where}` : void 0;
-    const targetWhereSql = config3.targetWhere ? sql` where ${config3.targetWhere}` : void 0;
-    const setWhereSql = config3.setWhere ? sql` where ${config3.setWhere}` : void 0;
-    const setSql = this.dialect.buildUpdateSet(this.config.table, mapUpdateSet(this.config.table, config3.set));
+    const whereSql = config4.where ? sql` where ${config4.where}` : void 0;
+    const targetWhereSql = config4.targetWhere ? sql` where ${config4.targetWhere}` : void 0;
+    const setWhereSql = config4.setWhere ? sql` where ${config4.setWhere}` : void 0;
+    const setSql = this.dialect.buildUpdateSet(this.config.table, mapUpdateSet(this.config.table, config4.set));
     let targetColumn = "";
-    targetColumn = Array.isArray(config3.target) ? config3.target.map((it) => this.dialect.escapeName(this.dialect.casing.getColumnCasing(it))).join(",") : this.dialect.escapeName(this.dialect.casing.getColumnCasing(config3.target));
+    targetColumn = Array.isArray(config4.target) ? config4.target.map((it) => this.dialect.escapeName(this.dialect.casing.getColumnCasing(it))).join(",") : this.dialect.escapeName(this.dialect.casing.getColumnCasing(config4.target));
     this.config.onConflict = sql`(${sql.raw(targetColumn)})${targetWhereSql} do update set ${setSql}${whereSql}${setWhereSql}`;
     return this;
   }
@@ -44043,7 +44867,7 @@ var RelationalQueryBuilder = class {
     this.session = session;
   }
   static [entityKind] = "PgRelationalQueryBuilder";
-  findMany(config3) {
+  findMany(config4) {
     return new PgRelationalQuery(
       this.fullSchema,
       this.schema,
@@ -44052,11 +44876,11 @@ var RelationalQueryBuilder = class {
       this.tableConfig,
       this.dialect,
       this.session,
-      config3 ? config3 : {},
+      config4 ? config4 : {},
       "many"
     );
   }
-  findFirst(config3) {
+  findFirst(config4) {
     return new PgRelationalQuery(
       this.fullSchema,
       this.schema,
@@ -44065,13 +44889,13 @@ var RelationalQueryBuilder = class {
       this.tableConfig,
       this.dialect,
       this.session,
-      config3 ? { ...config3, limit: 1 } : { limit: 1 },
+      config4 ? { ...config4, limit: 1 } : { limit: 1 },
       "first"
     );
   }
 };
 var PgRelationalQuery = class extends QueryPromise {
-  constructor(fullSchema, schema, tableNamesMap, table, tableConfig, dialect, session, config3, mode) {
+  constructor(fullSchema, schema, tableNamesMap, table, tableConfig, dialect, session, config4, mode) {
     super();
     this.fullSchema = fullSchema;
     this.schema = schema;
@@ -44080,7 +44904,7 @@ var PgRelationalQuery = class extends QueryPromise {
     this.tableConfig = tableConfig;
     this.dialect = dialect;
     this.session = session;
-    this.config = config3;
+    this.config = config4;
     this.mode = mode;
   }
   static [entityKind] = "PgRelationalQuery";
@@ -44447,8 +45271,8 @@ var PgDatabase = class {
       (result) => prepared.mapResult(result, true)
     );
   }
-  transaction(transaction, config3) {
-    return this.session.transaction(transaction, config3);
+  transaction(transaction, config4) {
+    return this.session.transaction(transaction, config4);
   }
 };
 
@@ -44621,21 +45445,21 @@ var PgTransaction = class extends PgDatabase {
     throw new TransactionRollbackError();
   }
   /** @internal */
-  getTransactionConfigSQL(config3) {
+  getTransactionConfigSQL(config4) {
     const chunks = [];
-    if (config3.isolationLevel) {
-      chunks.push(`isolation level ${config3.isolationLevel}`);
+    if (config4.isolationLevel) {
+      chunks.push(`isolation level ${config4.isolationLevel}`);
     }
-    if (config3.accessMode) {
-      chunks.push(config3.accessMode);
+    if (config4.accessMode) {
+      chunks.push(config4.accessMode);
     }
-    if (typeof config3.deferrable === "boolean") {
-      chunks.push(config3.deferrable ? "deferrable" : "not deferrable");
+    if (typeof config4.deferrable === "boolean") {
+      chunks.push(config4.deferrable ? "deferrable" : "not deferrable");
     }
     return sql.raw(chunks.join(" "));
   }
-  setTransaction(config3) {
-    return this.session.execute(sql`set transaction ${this.getTransactionConfigSQL(config3)}`);
+  setTransaction(config4) {
+    return this.session.execute(sql`set transaction ${this.getTransactionConfigSQL(config4)}`);
   }
 };
 
@@ -44810,11 +45634,11 @@ var NodePgSession = class _NodePgSession extends PgSession {
       customResultMapper
     );
   }
-  async transaction(transaction, config3) {
+  async transaction(transaction, config4) {
     const isPool = this.client instanceof Pool2 || Object.getPrototypeOf(this.client).constructor.name.includes("Pool");
     const session = isPool ? new _NodePgSession(await this.client.connect(), this.dialect, this.schema, this.options) : this;
     const tx = new NodePgTransaction(this.dialect, session, this.schema);
-    await tx.execute(sql`begin${config3 ? sql` ${tx.getTransactionConfigSQL(config3)}` : void 0}`);
+    await tx.execute(sql`begin${config4 ? sql` ${tx.getTransactionConfigSQL(config4)}` : void 0}`);
     try {
       const result = await transaction(tx);
       await tx.execute(sql`commit`);
@@ -44873,33 +45697,33 @@ var NodePgDriver = class {
 var NodePgDatabase = class extends PgDatabase {
   static [entityKind] = "NodePgDatabase";
 };
-function construct(client, config3 = {}) {
-  const dialect = new PgDialect({ casing: config3.casing });
+function construct(client, config4 = {}) {
+  const dialect = new PgDialect({ casing: config4.casing });
   let logger2;
-  if (config3.logger === true) {
+  if (config4.logger === true) {
     logger2 = new DefaultLogger();
-  } else if (config3.logger !== false) {
-    logger2 = config3.logger;
+  } else if (config4.logger !== false) {
+    logger2 = config4.logger;
   }
   let schema;
-  if (config3.schema) {
+  if (config4.schema) {
     const tablesConfig = extractTablesRelationalConfig(
-      config3.schema,
+      config4.schema,
       createTableRelationsHelpers
     );
     schema = {
-      fullSchema: config3.schema,
+      fullSchema: config4.schema,
       schema: tablesConfig.tables,
       tableNamesMap: tablesConfig.tableNamesMap
     };
   }
-  const driver = new NodePgDriver(client, dialect, { logger: logger2, cache: config3.cache });
+  const driver = new NodePgDriver(client, dialect, { logger: logger2, cache: config4.cache });
   const session = driver.createSession(schema);
   const db2 = new NodePgDatabase(dialect, session, schema);
   db2.$client = client;
-  db2.$cache = config3.cache;
+  db2.$cache = config4.cache;
   if (db2.$cache) {
-    db2.$cache["invalidate"] = config3.cache?.onMutate;
+    db2.$cache["invalidate"] = config4.cache?.onMutate;
   }
   return db2;
 }
@@ -44921,8 +45745,8 @@ function drizzle(...params) {
   return construct(params[0], params[1]);
 }
 ((drizzle2) => {
-  function mock(config3) {
-    return construct({}, config3);
+  function mock(config4) {
+    return construct({}, config4);
   }
   drizzle2.mock = mock;
 })(drizzle || (drizzle = {}));
@@ -45924,10 +46748,10 @@ function prefixIssues(path, issues) {
 function unwrapMessage(message) {
   return typeof message === "string" ? message : message?.message;
 }
-function finalizeIssue(iss, ctx, config3) {
+function finalizeIssue(iss, ctx, config4) {
   const full = { ...iss, path: iss.path ?? [] };
   if (!iss.message) {
-    const message = unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(ctx?.error?.(iss)) ?? unwrapMessage(config3.customError?.(iss)) ?? unwrapMessage(config3.localeError?.(iss)) ?? "Invalid input";
+    const message = unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(ctx?.error?.(iss)) ?? unwrapMessage(config4.customError?.(iss)) ?? unwrapMessage(config4.localeError?.(iss)) ?? "Invalid input";
     full.message = message;
   }
   delete full.inst;
@@ -56768,8 +57592,17 @@ app.use(import_express6.default.json());
 app.use(import_express6.default.urlencoded({ extended: true }));
 app.use("/", routes_default);
 var app_default = app;
+
+// src/serverless.ts
+dotenv2.config({ path: resolve2(process.cwd(), "../../.env") });
+var handler = (0, import_serverless_http.default)(app_default, {
+  request: (req) => {
+    req.url = req.url.replace(/^\/api/, "") || "/";
+  }
+});
+var serverless_default = handler;
 export {
-  app_default as default
+  serverless_default as default
 };
 /*! Bundled license information:
 
