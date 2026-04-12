@@ -4,11 +4,6 @@
   "buildCommand": "pnpm --filter @workspace/api-server build:serverless && pnpm --filter @workspace/shop build",
   "outputDirectory": "artifacts/shop/dist",
   "framework": null,
-  "functions": {
-    "api/index.mjs": {
-      "includeFiles": "artifacts/api-server/dist/**"
-    }
-  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.mjs" },
     { "source": "/(.*)", "destination": "/index.html" }
