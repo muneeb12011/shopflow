@@ -7,7 +7,7 @@ import app from "./app";
 
 const handler = serverless(app, {
   request: (req: any) => {
-    req.url = req.url.replace(/^\/api/, "") || "/";
+    req.url = req.url.replace(/^\/api\//, "/") || "/";
   },
 });
 
