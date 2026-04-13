@@ -1,16 +1,11 @@
-import * as dotenv from "dotenv";
-import { resolve } from "path";
-dotenv.config({ path: resolve(process.cwd(), "../../.env") });
-
 import serverless from "serverless-http";
 import app from "./app";
 
-const handler = serverless(app, {
-  request: (req: any) => {
-    // Strip /api prefix so Express routes match correctly
-    const url = req.url || "/";
-    req.url = url.startsWith("/api/") ? url.slice(4) : url;
-  },
-});
+const handler = serverless(app);
 
+// 👇 FORCE attach to global so esbuild cannot remove it
+(globalThis as any).__HANDLER__ = handler;
+
+// 👇 export both ways
 export default handler;
+module.exports = handler;

@@ -1,3 +1,3 @@
-import handler from "../artifacts/api-server/dist/app.mjs";
+import handler from "../artifacts/api-server/dist/app.cjs";
 
 export default handler;

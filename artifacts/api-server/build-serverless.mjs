@@ -9,31 +9,42 @@ globalThis.require = createRequire(import.meta.url);
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
 
 async function buildServerless() {
-  const outfile = path.resolve(artifactDir, "dist/app.mjs");
+  const distDir = path.resolve(artifactDir, "dist");
+  const outfile = path.resolve(distDir, "app.cjs");
+
+  // Clean dist
+  await rm(distDir, { recursive: true, force: true });
 
   await esbuild({
     entryPoints: [path.resolve(artifactDir, "src/serverless.ts")],
     platform: "node",
+    target: "node18",
     bundle: true,
-    format: "esm",
+
+    // ✅ Use CommonJS (stable for Vercel)
+    format: "cjs",
     outfile,
+
     logLevel: "info",
-    // Externalize only native addons — everything else is bundled
-    // so the serverless function is fully self-contained
     external: ["*.node", "pg-native"],
     sourcemap: false,
-    // Required shims for CJS interop inside an ESM bundle
+
     banner: {
-      js: `import { createRequire as __bannerCrReq } from 'node:module';
-import __bannerPath from 'node:path';
-import __bannerUrl from 'node:url';
-globalThis.require = __bannerCrReq(import.meta.url);
-globalThis.__filename = __bannerUrl.fileURLToPath(import.meta.url);
-globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);`,
+      js: `const { createRequire } = require('module');
+global.require = createRequire(__filename);`,
+    },
+
+    // 🔥 CRITICAL FIX — FORCE EXPORT
+    footer: {
+      js: `
+if (!module.exports) {
+  module.exports = global.__HANDLER__;
+}
+`,
     },
   });
 
-  console.log("Serverless app bundle built: dist/app.mjs");
+  console.log("✅ Serverless app bundle built: dist/app.cjs");
 }
 
 buildServerless().catch((err) => {
