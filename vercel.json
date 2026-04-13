@@ -4,8 +4,13 @@
   "buildCommand": "pnpm --filter @workspace/api-server build:serverless && pnpm --filter @workspace/shop build",
   "outputDirectory": "artifacts/shop/dist",
   "framework": null,
+  "functions": {
+    "artifacts/api-server/dist/app.mjs": {
+      "runtime": "nodejs22.x"
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.mjs" },
+    { "source": "/api/(.*)", "destination": "/artifacts/api-server/dist/app.mjs" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
