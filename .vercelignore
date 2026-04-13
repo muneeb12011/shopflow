@@ -4,8 +4,8 @@ node_modules
 node_modules/.pnpm
 
 # unused artifacts
-artifacts/api-server
 artifacts/mockup-sandbox
+
 agents
 
 # misc
