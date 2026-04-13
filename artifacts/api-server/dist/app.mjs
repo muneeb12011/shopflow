@@ -57600,7 +57600,8 @@ var app_default = app;
 dotenv2.config({ path: resolve2(process.cwd(), "../../.env") });
 var handler = (0, import_serverless_http.default)(app_default, {
   request: (req) => {
-    req.url = req.url.replace(/^\/api\//, "/") || "/";
+    const url2 = req.url || "/";
+    req.url = url2.startsWith("/api/") ? url2.slice(4) : url2;
   }
 });
 var serverless_default = handler;

@@ -7,7 +7,9 @@ import app from "./app";
 
 const handler = serverless(app, {
   request: (req: any) => {
-    req.url = req.url.replace(/^\/api\//, "/") || "/";
+    // Strip /api prefix so Express routes match correctly
+    const url = req.url || "/";
+    req.url = url.startsWith("/api/") ? url.slice(4) : url;
   },
 });
 
